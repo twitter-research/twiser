@@ -1,0 +1,4 @@
+-r base.in
+-r docs.in
+-r tests.in
+-r tools.in
