@@ -1,3 +1,6 @@
+# Copyright 2021 Twitter, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
 import numpy as np
 import scipy.stats as ss
 from hypothesis import given, settings
