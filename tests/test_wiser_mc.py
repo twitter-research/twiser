@@ -698,7 +698,7 @@ def test_ztest_stacked_train_fast_alt(
   alphas,
   seeds,
 )
-def test_ztest_stacked_fb_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, alpha, seed):
+def test_ztest_stacked_mlrate_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, alpha, seed):
   # TODO also test with kNN for clf
   runs = RUNS
   random = np.random.RandomState(seed)
@@ -728,7 +728,7 @@ def test_ztest_stacked_fb_train_null(nobs1, nobs2, std1, std2, shift1, gu_params
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    estimate, (lb, ub), pval, fallback = wiser._ztest_stacked_fb_train(
+    estimate, (lb, ub), pval, fallback = wiser._ztest_stacked_mlrate_train(
       x1, input1, x2, input2, alpha=alpha, clf=clf, random=random
     )
     R = (estimate, (lb, ub), pval)
@@ -757,7 +757,7 @@ def test_ztest_stacked_fb_train_null(nobs1, nobs2, std1, std2, shift1, gu_params
   alphas,
   seeds,
 )
-def test_ztest_stacked_fb_train_alt(
+def test_ztest_stacked_mlrate_train_alt(
   nobs1, nobs2, std1, std2, shift1, shift2, gu_params, alpha, seed
 ):
   # TODO also test with kNN for clf
@@ -789,7 +789,7 @@ def test_ztest_stacked_fb_train_alt(
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    estimate, (lb, ub), pval, fallback = wiser._ztest_stacked_fb_train(
+    estimate, (lb, ub), pval, fallback = wiser._ztest_stacked_mlrate_train(
       x1, input1, x2, input2, alpha=alpha, clf=clf, random=random
     )
     R = (estimate, (lb, ub), pval)

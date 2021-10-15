@@ -619,7 +619,7 @@ def test_ztest_stacked_train_blocks(data, alpha, k_fold, seed):
 
 
 @given(data_vector_pairs_4, data_vector_pairs_4, alphas, folds, seeds)
-def test_ztest_stacked_fb_train(xx, yy, alpha, k_fold, seed):
+def test_ztest_stacked_mlrate_train(xx, yy, alpha, k_fold, seed):
   (x, xp) = xx
   (y, yp) = yy
 
@@ -630,7 +630,7 @@ def test_ztest_stacked_fb_train(xx, yy, alpha, k_fold, seed):
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
     general_hyp_tester(
-      wiser.ztest_stacked_fb_train,
+      wiser.ztest_stacked_mlrate_train,
       alpha,
       x,
       xp[:, None],

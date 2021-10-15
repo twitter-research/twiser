@@ -902,7 +902,7 @@ def _ztest_stacked_train_blocks(data_iter, *, alpha=ALPHA, clf=None, callback=No
   return R
 
 
-def _ztest_stacked_fb_train(
+def _ztest_stacked_mlrate_train(
   x,
   x_covariates,
   y,
@@ -990,7 +990,7 @@ def _ztest_stacked_fb_train(
   return estimate, (lb, ub), pval, False
 
 
-def ztest_stacked_fb_train(*args, **kwargs):
+def ztest_stacked_mlrate_train(*args, **kwargs):
   """Very similar to `ztest_stacked_train` but uses the method of Guo et. al. to try to account for
   the correlations between cross validation folds.
 
@@ -1038,5 +1038,5 @@ def ztest_stacked_fb_train(*args, **kwargs):
   ----------
   https://drive.google.com/file/d/153hxSPJjvVejZS8ot_W8cm6S_YGO0o88/view
   """
-  estimate, (lb, ub), pval, _ = _ztest_stacked_fb_train(*args, **kwargs)
+  estimate, (lb, ub), pval, _ = _ztest_stacked_mlrate_train(*args, **kwargs)
   return estimate, (lb, ub), pval
