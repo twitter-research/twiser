@@ -1,4 +1,7 @@
 #!/bin/bash
+# Copyright 2021 Twitter, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
 #
 # For now, just run the regular tests, that's it
 

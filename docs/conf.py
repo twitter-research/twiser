@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+# Copyright 2021 Twitter, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
 # -*- coding: utf-8 -*-
 #
 # wiser documentation build configuration file.
