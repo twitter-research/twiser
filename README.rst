@@ -22,8 +22,15 @@ Example Usage
 
 TODO
 
+Support
+=======
+
+Create a `new issue <https://github.com/twitter-research/wiser/issues/new/choose>`_ or `join a discussion <https://github.com/twitter-research/wiser/discussions>`_.
+
 Contributing
 ============
+
+We welcome contributions of all kinds! See our `contributing guide <CONTRIBUTING.md>`_ as well as Twitter's `Open Source Code of Conduct <https://github.com/twitter/.github/blob/master/code-of-conduct.md>`_.
 
 The following instructions have been tested with Python 3.7.4 on Mac OS (11.5.2).
 
