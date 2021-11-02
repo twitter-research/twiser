@@ -796,10 +796,45 @@ def ztest_stacked_train_blockwise(
   clf=None,
   random=random,
 ):
-  """More efficient if the fit routine scales worse than O(N), otherwise this will not be more
-  efficient.
+  """Version of `ztest_stacked_train` that is more efficient if the fit routine scales worse than
+  O(N), otherwise this will not be more efficient.
 
-  TODO full doc str
+  Parameters
+  ----------
+  x : ndarray of shape (n,)
+    Outcomes for the treatment group.
+  x_covariates : ndarray of shape (n, d)
+    Covariates/features for the treatment group.
+  y : ndarray of shape (m,)
+    Outcomes for the control group.
+  y_covariates : ndarray of shape (m, d)
+    Covariates/features for the control group.
+  alpha : float
+    Required confidence level, typically this should be 0.95, and must be inside the interval range
+    ``(0, 1]``.
+  k_fold : int
+    The number of folds in the cross validation: `K`.
+  health_check_input : bool
+    If ``True`` perform a health check that ensures the features have the same distribution in
+    treatment and control. If not, issue a warning. It works by training a classifier to predict if
+    a data point is in training or control. This can be slow for a large data set since it requires
+    training a classifier.
+  health_check_output : bool
+    If ``True`` perform a health check that ensures the predictions have the same distribution in
+    treatment and control. If not, issue a warning.
+  clf : sklearn-like regression object
+    An object that has a `fit` and `predict` routine to make predictions.
+  random : RandomState
+    An optional numpy random stream can be passed in for reproducibility.
+
+  Returns
+  -------
+  estimate : float
+    Estimate of the difference in means: ``E[x] - E[y]``.
+  ci : (float, float)
+    Confidence interval (with coverage `alpha`) for the estimate.
+  pval : float
+    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
   """
   n_x, n_y, _ = _validate_train_data(x, x_covariates, y, y_covariates, k_fold=k_fold)
   _validate_alpha(alpha)
@@ -838,14 +873,41 @@ def ztest_stacked_train_blockwise(
 
 
 def ztest_stacked_train_load_blockwise(data_iter, *, alpha=ALPHA, clf=None, callback=None):
-  """TODO full doc str."""
+  """Version of `ztest_stacked_train_blockwise` that loads the data in blocks to avoid overflowing
+  memory. Using `ztest_stacked_train_blockwise` is faster if all the data fits in memory.
+
+  Parameters
+  ----------
+  data_iter : iterable[callable]
+    An iterable of functions, where each function returns a different cross validation fold. The
+    functions should return data in the format of a tuple: ``(x, x_covariates, y, y_covariates)``.
+    See the parameters of `ztest_stacked_train_blockwise` for details on the shapes of these
+    variables.
+  alpha : float
+    Required confidence level, typically this should be 0.95, and must be inside the interval range
+    ``(0, 1]``.
+  clf : sklearn-like regression object
+    An object that has a `fit` and `predict` routine to make predictions.
+  callback : callable
+    An optional callback that gets called for each cross validation fold in the format
+    ``callback(clf)``. This is sometimes useful for logging.
+
+  Returns
+  -------
+  estimate : float
+    Estimate of the difference in means: ``E[x] - E[y]``.
+  ci : (float, float)
+    Confidence interval (with coverage `alpha`) for the estimate.
+  pval : float
+    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
+  """
   k_fold = len(data_iter)
   assert k_fold >= MIN_FOLD
   _validate_alpha(alpha)
 
   if clf is None:
     clf = PassThruPred()
-  # TODO make sure this works with pass thru, cuped, ...
+
   try:
     clf = [clone(clf) for _ in range(k_fold)]
   except TypeError:
