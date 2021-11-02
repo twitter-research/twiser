@@ -783,7 +783,7 @@ def ztest_stacked_train(
   return R
 
 
-def ztest_stacked_train_fast(
+def ztest_stacked_train_blockwise(
   x,
   x_covariates,
   y,
@@ -837,7 +837,7 @@ def ztest_stacked_train_fast(
   return R
 
 
-def _ztest_stacked_train_blocks(data_iter, *, alpha=ALPHA, clf=None, callback=None):
+def ztest_stacked_train_load_blockwise(data_iter, *, alpha=ALPHA, clf=None, callback=None):
   """TODO full doc str."""
   k_fold = len(data_iter)
   assert k_fold >= MIN_FOLD
