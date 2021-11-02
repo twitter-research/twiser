@@ -1,0 +1,7 @@
+pytest==6.0.1
+hypothesis==6.23.1
+hypothesis_gufunc==0.0.6
+numpy==1.21.2
+pytest_cov==2.12.1
+scipy==1.7.1
+scikit_learn==1.0
