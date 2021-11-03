@@ -48,7 +48,6 @@ MIN_SPLIT = 2  # Min data size so we can estimate mean and variance
 MIN_FOLD = 2  # At least need a train and test in K-fold
 
 # TODO offer z and t versions, t might be better for MC tests of correctness, test="z" or "t"??
-# TODO options for tf and torch for O(N) memory funcs
 # TODO type hints
 
 
@@ -133,8 +132,6 @@ def _validate_alpha(alpha):
 
 
 def _validate_data(x, y, paired=False, dtypes=("i", "f")):
-  # TODO decide on non-finite policy and test it
-  #    just assert fail on any non-finite in x and y??
   assert np.ndim(x) == 1
   assert np.ndim(y) == 1
   assert len(x) >= MIN_SPLIT
@@ -144,6 +141,9 @@ def _validate_data(x, y, paired=False, dtypes=("i", "f")):
   assert y.dtype.kind in dtypes
   if paired:
     assert np.shape(x) == np.shape(y)
+  # We can always generalize to allow non-finite input later
+  assert np.all(np.isfinite(x))
+  assert np.all(np.isfinite(y))
 
 
 def _validate_train_data(x, x_covariates, y, y_covariates, k_fold=2):
@@ -915,7 +915,6 @@ def ztest_stacked_train_load_blockwise(data_iter, *, alpha=ALPHA, clf=None, call
 
   # Train a model for each block
   for clf_, data_gen in zip(clf, data_iter):
-    # TODO consider explicit delete of these at end of loop
     (x, x_covariates, y, y_covariates) = data_gen()
     _validate_train_data_block(x, x_covariates, y, y_covariates)
 
@@ -933,7 +932,6 @@ def ztest_stacked_train_load_blockwise(data_iter, *, alpha=ALPHA, clf=None, call
   cov2 = np.zeros((k_fold, 2, 2))
   nobs2 = np.zeros(k_fold)
   for kk, data_gen in enumerate(data_iter):
-    # TODO consider explicit delete of these at end of loop
     (x, x_covariates, y, y_covariates) = data_gen()
     n_x, n_y, _ = _validate_train_data_block(x, x_covariates, y, y_covariates)
 
@@ -1034,10 +1032,12 @@ def _ztest_stacked_mlrate_train(
   base_var = np.var(y, ddof=_ddof) / (1 - p_hat) + np.var(x, ddof=_ddof) / p_hat
   sample_var = base_var - (pred_var * fac)
   assert np.isfinite(sample_var)
-  # TODO figure out way to clip the predictor such that the sample variance estimate is always
-  # positive. For now, just fall back to regular z test since the predictor is probably crap. Once
-  # we eliminate the fallback we will also eliminate the fallback flag.
   if sample_var <= 0.0:
+    warnings.warn(
+      "MLRATE calculated a negative sample variance. The predictor is probably garbage. "
+      "Falling back on a no variance reduction test.",
+      UserWarning,
+    )
     estimate, (lb, ub), pval = ztest(x, y, alpha=alpha, _ddof=_ddof)
     return estimate, (lb, ub), pval, True
 
