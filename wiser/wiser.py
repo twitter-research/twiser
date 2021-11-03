@@ -605,6 +605,10 @@ def ztest_in_sample_train(
 
 def _pool_moments(mean, cov, nobs):
   """Warning: this routine is currently only correct for ddof=0."""
+  mean = np.asarray_chkfinite(mean)
+  cov = np.asarray_chkfinite(cov)
+  nobs = np.asarray_chkfinite(nobs)
+
   n_g, d = mean.shape
   assert nobs.shape == (n_g,)
   assert cov.shape == (n_g, d, d)
