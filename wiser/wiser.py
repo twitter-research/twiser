@@ -100,7 +100,6 @@ class Cuped(object):
 
 
 # ==== Validation ====
-# TODO consider using np.asarray here to convert to array in case a list is passed in
 
 
 def _is_psd2(cov):
@@ -109,7 +108,15 @@ def _is_psd2(cov):
   return is_psd
 
 
+def _validate_alpha(alpha):
+  # Only scalars coming in, so no need to pass back an np version
+  assert np.shape(alpha) == ()
+  assert 0.0 < alpha
+  assert alpha <= 1.0
+
+
 def _validate_moments_1(mean, std, n):
+  # Only scalars coming in, so no need to pass back an np version
   assert np.shape(mean) == ()
   assert np.shape(std) == ()
   assert np.shape(n) == ()
@@ -118,20 +125,22 @@ def _validate_moments_1(mean, std, n):
 
 
 def _validate_moments_2(mean, cov, n):
+  mean = np.asarray_chkfinite(mean)
+  cov = np.asarray_chkfinite(cov)
+
   assert np.shape(mean) == (2,)
   assert np.shape(cov) == (2, 2)
   assert np.shape(n) == ()
   assert _is_psd2(cov)
   assert n > 0
+  return mean, cov, n
 
 
-def _validate_alpha(alpha):
-  assert np.shape(alpha) == ()
-  assert 0.0 < alpha
-  assert alpha <= 1.0
+def _validate_data(x, y, *, paired=False, dtypes=("i", "f")):
+  # We can always generalize to allow non-finite input later
+  x = np.asarray_chkfinite(x)
+  y = np.asarray_chkfinite(y)
 
-
-def _validate_data(x, y, paired=False, dtypes=("i", "f")):
   assert np.ndim(x) == 1
   assert np.ndim(y) == 1
   assert len(x) >= MIN_SPLIT
@@ -141,12 +150,15 @@ def _validate_data(x, y, paired=False, dtypes=("i", "f")):
   assert y.dtype.kind in dtypes
   if paired:
     assert np.shape(x) == np.shape(y)
-  # We can always generalize to allow non-finite input later
-  assert np.all(np.isfinite(x))
-  assert np.all(np.isfinite(y))
+  return x, y
 
 
-def _validate_train_data(x, x_covariates, y, y_covariates, k_fold=2):
+def _validate_train_data(x, x_covariates, y, y_covariates, *, k_fold=2):
+  x = np.asarray_chkfinite(x)
+  x_covariates = np.asarray(x_covariates)
+  y = np.asarray_chkfinite(y)
+  y_covariates = np.asarray(y_covariates)
+
   n_x, d = x_covariates.shape
   n_y, = y.shape
   assert x.shape == (n_x,)
@@ -155,11 +167,15 @@ def _validate_train_data(x, x_covariates, y, y_covariates, k_fold=2):
   assert k_fold >= MIN_FOLD
   assert n_x >= MIN_SPLIT * k_fold
   assert n_y >= MIN_SPLIT * k_fold
-
-  return n_x, n_y, d
+  return (x, x_covariates, y, y_covariates), (n_x, n_y, d)
 
 
 def _validate_train_data_block(x, x_covariates, y, y_covariates):
+  x = np.asarray_chkfinite(x)
+  x_covariates = np.asarray(x_covariates)
+  y = np.asarray_chkfinite(y)
+  y_covariates = np.asarray(y_covariates)
+
   n_x, d = x_covariates.shape
   n_y, = y.shape
   assert x.shape == (n_x,)
@@ -167,8 +183,7 @@ def _validate_train_data_block(x, x_covariates, y, y_covariates):
   assert d >= 1
   assert n_x >= MIN_SPLIT
   assert n_y >= MIN_SPLIT
-
-  return n_x, n_y, d
+  return (x, x_covariates, y, y_covariates), (n_x, n_y, d)
 
 
 # ==== Health Check Features ====
@@ -186,6 +201,7 @@ def _health_check_features(x, y, *, train_frac=TRAIN_FRAC):
   train_idx = _make_train_idx(train_frac, len(z), random=random)
 
   # Just hard coding default clf for now
+  # TODO make this an arg
   clf = LogisticRegression()
   clf.fit(z[train_idx, :], target[train_idx])
   pred = clf.predict(z[~train_idx, :])
@@ -282,7 +298,7 @@ def ztest(x, y, *, alpha=ALPHA, _ddof=1):
   pval : float
     The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
   """
-  _validate_data(x, y, dtypes=("b", "u", "i", "f"))
+  x, y = _validate_data(x, y, dtypes=("b", "u", "i", "f"))
   _validate_alpha(alpha)
 
   R = ztest_from_stats(
@@ -354,8 +370,8 @@ def ztest_cv_from_stats(mean1, cov1, nobs1, mean2, cov2, nobs2, *, alpha=ALPHA):
   pval : float
     The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
   """
-  _validate_moments_2(mean1, cov1, nobs1)
-  _validate_moments_2(mean2, cov2, nobs2)
+  mean1, cov1, nobs1 = _validate_moments_2(mean1, cov1, nobs1)
+  mean2, cov2, nobs2 = _validate_moments_2(mean2, cov2, nobs2)
   _validate_alpha(alpha)
 
   mean1, std1 = _delta_moments(mean1, cov1)
@@ -398,8 +414,8 @@ def ztest_cv(x, xp, y, yp, *, alpha=ALPHA, health_check_output=True, _ddof=1):
   pval : float
     The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
   """
-  _validate_data(x, xp, paired=True)
-  _validate_data(y, yp, paired=True)
+  x, xp = _validate_data(x, xp, paired=True)
+  y, yp = _validate_data(y, yp, paired=True)
   _validate_alpha(alpha)
 
   if health_check_output:
@@ -467,7 +483,9 @@ def ztest_cv_train(
   pval : float
     The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
   """
-  n_x, n_y, _ = _validate_train_data(x, x_covariates, y, y_covariates)
+  (x, x_covariates, y, y_covariates), (n_x, n_y, _) = _validate_train_data(
+    x, x_covariates, y, y_covariates
+  )
   _validate_alpha(alpha)
   assert 0.0 <= train_frac
   assert train_frac <= 1.0
@@ -558,7 +576,9 @@ def ztest_in_sample_train(
   pval : float
     The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
   """
-  n_x, n_y, _ = _validate_train_data(x, x_covariates, y, y_covariates)
+  (x, x_covariates, y, y_covariates), (n_x, n_y, _) = _validate_train_data(
+    x, x_covariates, y, y_covariates
+  )
   _validate_alpha(alpha)
 
   if clf is None:
@@ -689,8 +709,8 @@ def ztest_stacked(x, xp, x_fold, y, yp, y_fold, *, alpha=ALPHA, health_check_out
   pval : float
     The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
   """
-  _validate_data(x, xp, paired=True)
-  _validate_data(y, yp, paired=True)
+  x, xp = _validate_data(x, xp, paired=True)
+  y, yp = _validate_data(y, yp, paired=True)
   _validate_alpha(alpha)
 
   # Current method ignores fold index => we won't validate for now
@@ -753,7 +773,9 @@ def ztest_stacked_train(
   pval : float
     The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
   """
-  n_x, n_y, _ = _validate_train_data(x, x_covariates, y, y_covariates, k_fold=k_fold)
+  (x, x_covariates, y, y_covariates), (n_x, n_y, _) = _validate_train_data(
+    x, x_covariates, y, y_covariates, k_fold=k_fold
+  )
   _validate_alpha(alpha)
 
   if clf is None:
@@ -836,7 +858,9 @@ def ztest_stacked_train_blockwise(
   pval : float
     The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
   """
-  n_x, n_y, _ = _validate_train_data(x, x_covariates, y, y_covariates, k_fold=k_fold)
+  (x, x_covariates, y, y_covariates), (n_x, n_y, _) = _validate_train_data(
+    x, x_covariates, y, y_covariates, k_fold=k_fold
+  )
   _validate_alpha(alpha)
 
   if clf is None:
@@ -916,7 +940,9 @@ def ztest_stacked_train_load_blockwise(data_iter, *, alpha=ALPHA, clf=None, call
   # Train a model for each block
   for clf_, data_gen in zip(clf, data_iter):
     (x, x_covariates, y, y_covariates) = data_gen()
-    _validate_train_data_block(x, x_covariates, y, y_covariates)
+    (x, x_covariates, y, y_covariates), _ = _validate_train_data_block(
+      x, x_covariates, y, y_covariates
+    )
 
     z_covariates = np.concatenate((x_covariates, y_covariates), axis=0)
     z = np.concatenate((x, y), axis=0)
@@ -933,7 +959,9 @@ def ztest_stacked_train_load_blockwise(data_iter, *, alpha=ALPHA, clf=None, call
   nobs2 = np.zeros(k_fold)
   for kk, data_gen in enumerate(data_iter):
     (x, x_covariates, y, y_covariates) = data_gen()
-    n_x, n_y, _ = _validate_train_data_block(x, x_covariates, y, y_covariates)
+    (x, x_covariates, y, y_covariates), (n_x, n_y, _) = _validate_train_data_block(
+      x, x_covariates, y, y_covariates
+    )
 
     # Get predictions from each fold predictor
     xp = np.nan + np.zeros((n_x, k_fold))
@@ -977,7 +1005,9 @@ def _ztest_stacked_mlrate_train(
   _ddof=1,
 ):
   """x is treatment here, y is control."""
-  n_x, n_y, _ = _validate_train_data(x, x_covariates, y, y_covariates, k_fold=k_fold)
+  (x, x_covariates, y, y_covariates), (n_x, n_y, _) = _validate_train_data(
+    x, x_covariates, y, y_covariates, k_fold=k_fold
+  )
   _validate_alpha(alpha)
 
   if health_check_input:
