@@ -189,20 +189,26 @@ def _validate_train_data_block(x, x_covariates, y, y_covariates):
 # ==== Health Check Features ====
 
 
-def _health_check_features(x, y, *, train_frac=TRAIN_FRAC):
+def _health_check_features(x, y, *, train_frac=TRAIN_FRAC, clf=None):
   random = np.random.RandomState(0)
 
   n = min(len(x), len(y))
 
-  # TODO might want to consider shuffle subset
-  z = np.concatenate((x[:n, :], y[:n, :]), axis=0)
+  if len(x) < n:
+    x = x[subset_idx(n, len(x), random=random), :]
+  if len(y) < n:
+    y = y[subset_idx(n, len(y), random=random), :]
+  assert len(x) == n
+  assert len(y) == n
+
+  z = np.concatenate((x, y), axis=0)
   target = np.concatenate((np.ones(n, dtype=bool), np.zeros(n, dtype=bool)), axis=0)
 
   train_idx = _make_train_idx(train_frac, len(z), random=random)
 
   # Just hard coding default clf for now
-  # TODO make this an arg
-  clf = LogisticRegression()
+  if clf is None:
+    clf = LogisticRegression()
   clf.fit(z[train_idx, :], target[train_idx])
   pred = clf.predict(z[~train_idx, :])
 
@@ -216,8 +222,15 @@ def _health_check_features(x, y, *, train_frac=TRAIN_FRAC):
 
 
 def _health_check_output(x, y):
-  # TODO might need to add jitter since kstest does not work with dupes
-  d, pval = ss.ks_2samp(x, y)
+  # KS test is not valid in the presence of dupes
+  z = np.concatenate((x, y), axis=0)
+  # This is faster than set operations for large z, but bloom-filter would be more mem efficient
+  all_unique = len(np.unique(z)) == len(z)
+
+  if all_unique:
+    _, pval = ss.ks_2samp(x, y)
+  else:
+    _, _, pval = ztest(x, y)  # only check the means
 
   if pval <= HEALTH_CHK_PVAL:
     warnings.warn(f"Predictors have different distribution with p = {pval}", UserWarning)
@@ -322,6 +335,13 @@ def _delta_moments(mean, cov):
   return delta_mean, delta_std
 
 
+def subset_idx(m, n, random=random):
+  idx = np.zeros(n, dtype=bool)
+  idx[:m] = True
+  random.shuffle(idx)
+  return idx
+
+
 def _make_train_idx(frac, n, random=random):
   # There are functions in sklearn we could use to avoid needing to implement this, but we are
   # trying to avoid needing sklearn as a dep outside of the unit tests.
@@ -330,10 +350,7 @@ def _make_train_idx(frac, n, random=random):
   n_train = int(np.ceil(np.clip(frac * n, MIN_SPLIT, n - MIN_SPLIT)).item())
   assert n_train >= MIN_SPLIT
   assert n_train <= n - MIN_SPLIT
-
-  train_idx = np.zeros(n, dtype=bool)
-  train_idx[:n_train] = True
-  random.shuffle(train_idx)
+  train_idx = subset_idx(n_train, n, random=random)
   assert np.sum(train_idx) >= MIN_SPLIT
   assert np.sum(~train_idx) >= MIN_SPLIT
   return train_idx
