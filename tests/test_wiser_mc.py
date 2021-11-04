@@ -595,7 +595,9 @@ def test_ztest_stacked_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_pa
   alphas,
   seeds,
 )
-def test_ztest_stacked_train_fast_null(nobs1, nobs2, std1, std2, shift1, gu_params, alpha, seed):
+def test_ztest_stacked_train_blockwise_null(
+  nobs1, nobs2, std1, std2, shift1, gu_params, alpha, seed
+):
   # TODO also test with kNN for clf
   runs = RUNS
   random = np.random.RandomState(seed)
@@ -624,7 +626,9 @@ def test_ztest_stacked_train_fast_null(nobs1, nobs2, std1, std2, shift1, gu_para
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    R = wiser.ztest_stacked_train_fast(x1, input1, x2, input2, alpha=alpha, clf=clf, random=random)
+    R = wiser.ztest_stacked_train_blockwise(
+      x1, input1, x2, input2, alpha=alpha, clf=clf, random=random
+    )
     results_list.append(R)
 
   pval = gen_validate(results_list, true_value=0.0, alpha=alpha)
@@ -646,7 +650,7 @@ def test_ztest_stacked_train_fast_null(nobs1, nobs2, std1, std2, shift1, gu_para
   alphas,
   seeds,
 )
-def test_ztest_stacked_train_fast_alt(
+def test_ztest_stacked_train_blockwise_alt(
   nobs1, nobs2, std1, std2, shift1, shift2, gu_params, alpha, seed
 ):
   # TODO also test with kNN for clf
@@ -677,7 +681,9 @@ def test_ztest_stacked_train_fast_alt(
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    R = wiser.ztest_stacked_train_fast(x1, input1, x2, input2, alpha=alpha, clf=clf, random=random)
+    R = wiser.ztest_stacked_train_blockwise(
+      x1, input1, x2, input2, alpha=alpha, clf=clf, random=random
+    )
     results_list.append(R)
 
   pval = gen_validate(results_list, true_value=true_value, alpha=alpha, test_null=False)
