@@ -16,9 +16,7 @@ RUNS = 1000
 
 print(f"\nCutoff prob in MC tests P = {PVAL_CUTOFF}")
 
-# TODO if we have a t version instead of z we can use small_samples where we currently use medium
-# samples
-
+# For t-test instead of z-test we can use small_samples instead of medium_samples
 small_samples = integers(min_value=1, max_value=20)
 medium_samples = integers(min_value=20, max_value=50)
 big_samples = integers(min_value=100, max_value=500)
@@ -394,7 +392,6 @@ def test_ztest_cv_from_stats_alt(
   seeds,
 )
 def test_ztest_cv_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, alpha, seed):
-  # TODO also test with kNN for clf
   runs = RUNS
   random = np.random.RandomState(seed)
 
@@ -445,7 +442,6 @@ def test_ztest_cv_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, alpha,
   seeds,
 )
 def test_ztest_cv_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_params, alpha, seed):
-  # TODO also test with kNN for clf
   runs = RUNS
   random = np.random.RandomState(seed)
 
@@ -495,7 +491,6 @@ def test_ztest_cv_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_params,
   seeds,
 )
 def test_ztest_stacked_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, alpha, seed):
-  # TODO also test with kNN for clf
   runs = RUNS
   random = np.random.RandomState(seed)
 
@@ -546,7 +541,6 @@ def test_ztest_stacked_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, a
   seeds,
 )
 def test_ztest_stacked_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_params, alpha, seed):
-  # TODO also test with kNN for clf
   runs = RUNS
   random = np.random.RandomState(seed)
 
@@ -598,7 +592,6 @@ def test_ztest_stacked_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_pa
 def test_ztest_stacked_train_blockwise_null(
   nobs1, nobs2, std1, std2, shift1, gu_params, alpha, seed
 ):
-  # TODO also test with kNN for clf
   runs = RUNS
   random = np.random.RandomState(seed)
 
@@ -653,7 +646,6 @@ def test_ztest_stacked_train_blockwise_null(
 def test_ztest_stacked_train_blockwise_alt(
   nobs1, nobs2, std1, std2, shift1, shift2, gu_params, alpha, seed
 ):
-  # TODO also test with kNN for clf
   runs = RUNS
   random = np.random.RandomState(seed)
 
@@ -705,7 +697,6 @@ def test_ztest_stacked_train_blockwise_alt(
   seeds,
 )
 def test_ztest_stacked_mlrate_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, alpha, seed):
-  # TODO also test with kNN for clf
   runs = RUNS
   random = np.random.RandomState(seed)
 
@@ -766,7 +757,6 @@ def test_ztest_stacked_mlrate_train_null(nobs1, nobs2, std1, std2, shift1, gu_pa
 def test_ztest_stacked_mlrate_train_alt(
   nobs1, nobs2, std1, std2, shift1, shift2, gu_params, alpha, seed
 ):
-  # TODO also test with kNN for clf
   runs = RUNS
   random = np.random.RandomState(seed)
 
