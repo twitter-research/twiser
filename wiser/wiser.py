@@ -47,8 +47,6 @@ HEALTH_CHK_PVAL = 1e-6
 MIN_SPLIT = 2  # Min data size so we can estimate mean and variance
 MIN_FOLD = 2  # At least need a train and test in K-fold
 
-# TODO offer z and t versions, t might be better for MC tests of correctness, test="z" or "t"??
-# TODO options for tf and torch for O(N) memory funcs
 # TODO type hints
 
 
@@ -101,7 +99,6 @@ class Cuped(object):
 
 
 # ==== Validation ====
-# TODO consider using np.asarray here to convert to array in case a list is passed in
 
 
 def _is_psd2(cov):
@@ -110,7 +107,15 @@ def _is_psd2(cov):
   return is_psd
 
 
+def _validate_alpha(alpha):
+  # Only scalars coming in, so no need to pass back an np version
+  assert np.shape(alpha) == ()
+  assert 0.0 < alpha
+  assert alpha <= 1.0
+
+
 def _validate_moments_1(mean, std, n):
+  # Only scalars coming in, so no need to pass back an np version
   assert np.shape(mean) == ()
   assert np.shape(std) == ()
   assert np.shape(n) == ()
@@ -119,22 +124,22 @@ def _validate_moments_1(mean, std, n):
 
 
 def _validate_moments_2(mean, cov, n):
+  mean = np.asarray_chkfinite(mean)
+  cov = np.asarray_chkfinite(cov)
+
   assert np.shape(mean) == (2,)
   assert np.shape(cov) == (2, 2)
   assert np.shape(n) == ()
   assert _is_psd2(cov)
   assert n > 0
+  return mean, cov, n
 
 
-def _validate_alpha(alpha):
-  assert np.shape(alpha) == ()
-  assert 0.0 < alpha
-  assert alpha <= 1.0
+def _validate_data(x, y, *, paired=False, dtypes=("i", "f")):
+  # We can always generalize to allow non-finite input later
+  x = np.asarray_chkfinite(x)
+  y = np.asarray_chkfinite(y)
 
-
-def _validate_data(x, y, paired=False, dtypes=("i", "f")):
-  # TODO decide on non-finite policy and test it
-  #    just assert fail on any non-finite in x and y??
   assert np.ndim(x) == 1
   assert np.ndim(y) == 1
   assert len(x) >= MIN_SPLIT
@@ -144,9 +149,15 @@ def _validate_data(x, y, paired=False, dtypes=("i", "f")):
   assert y.dtype.kind in dtypes
   if paired:
     assert np.shape(x) == np.shape(y)
+  return x, y
 
 
-def _validate_train_data(x, x_covariates, y, y_covariates, k_fold=2):
+def _validate_train_data(x, x_covariates, y, y_covariates, *, k_fold=2):
+  x = np.asarray_chkfinite(x)
+  x_covariates = np.asarray(x_covariates)
+  y = np.asarray_chkfinite(y)
+  y_covariates = np.asarray(y_covariates)
+
   n_x, d = x_covariates.shape
   n_y, = y.shape
   assert x.shape == (n_x,)
@@ -155,11 +166,15 @@ def _validate_train_data(x, x_covariates, y, y_covariates, k_fold=2):
   assert k_fold >= MIN_FOLD
   assert n_x >= MIN_SPLIT * k_fold
   assert n_y >= MIN_SPLIT * k_fold
-
-  return n_x, n_y, d
+  return (x, x_covariates, y, y_covariates), (n_x, n_y, d)
 
 
 def _validate_train_data_block(x, x_covariates, y, y_covariates):
+  x = np.asarray_chkfinite(x)
+  x_covariates = np.asarray(x_covariates)
+  y = np.asarray_chkfinite(y)
+  y_covariates = np.asarray(y_covariates)
+
   n_x, d = x_covariates.shape
   n_y, = y.shape
   assert x.shape == (n_x,)
@@ -167,26 +182,32 @@ def _validate_train_data_block(x, x_covariates, y, y_covariates):
   assert d >= 1
   assert n_x >= MIN_SPLIT
   assert n_y >= MIN_SPLIT
-
-  return n_x, n_y, d
+  return (x, x_covariates, y, y_covariates), (n_x, n_y, d)
 
 
 # ==== Health Check Features ====
 
 
-def _health_check_features(x, y, *, train_frac=TRAIN_FRAC):
+def _health_check_features(x, y, *, train_frac=TRAIN_FRAC, clf=None):
   random = np.random.RandomState(0)
 
   n = min(len(x), len(y))
 
-  # TODO might want to consider shuffle subset
-  z = np.concatenate((x[:n, :], y[:n, :]), axis=0)
+  if len(x) < n:
+    x = x[subset_idx(n, len(x), random=random), :]
+  if len(y) < n:
+    y = y[subset_idx(n, len(y), random=random), :]
+  assert len(x) == n
+  assert len(y) == n
+
+  z = np.concatenate((x, y), axis=0)
   target = np.concatenate((np.ones(n, dtype=bool), np.zeros(n, dtype=bool)), axis=0)
 
   train_idx = _make_train_idx(train_frac, len(z), random=random)
 
   # Just hard coding default clf for now
-  clf = LogisticRegression()
+  if clf is None:
+    clf = LogisticRegression()
   clf.fit(z[train_idx, :], target[train_idx])
   pred = clf.predict(z[~train_idx, :])
 
@@ -200,8 +221,15 @@ def _health_check_features(x, y, *, train_frac=TRAIN_FRAC):
 
 
 def _health_check_output(x, y):
-  # TODO might need to add jitter since kstest does not work with dupes
-  d, pval = ss.ks_2samp(x, y)
+  # KS test is not valid in the presence of dupes
+  z = np.concatenate((x, y), axis=0)
+  # This is faster than set operations for large z, but bloom-filter would be more mem efficient
+  all_unique = len(np.unique(z)) == len(z)
+
+  if all_unique:
+    _, pval = ss.ks_2samp(x, y)
+  else:
+    _, _, pval = ztest(x, y)  # only check the means
 
   if pval <= HEALTH_CHK_PVAL:
     warnings.warn(f"Predictors have different distribution with p = {pval}", UserWarning)
@@ -282,7 +310,7 @@ def ztest(x, y, *, alpha=ALPHA, _ddof=1):
   pval : float
     The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
   """
-  _validate_data(x, y, dtypes=("b", "u", "i", "f"))
+  x, y = _validate_data(x, y, dtypes=("b", "u", "i", "f"))
   _validate_alpha(alpha)
 
   R = ztest_from_stats(
@@ -306,6 +334,13 @@ def _delta_moments(mean, cov):
   return delta_mean, delta_std
 
 
+def subset_idx(m, n, random=random):
+  idx = np.zeros(n, dtype=bool)
+  idx[:m] = True
+  random.shuffle(idx)
+  return idx
+
+
 def _make_train_idx(frac, n, random=random):
   # There are functions in sklearn we could use to avoid needing to implement this, but we are
   # trying to avoid needing sklearn as a dep outside of the unit tests.
@@ -314,10 +349,7 @@ def _make_train_idx(frac, n, random=random):
   n_train = int(np.ceil(np.clip(frac * n, MIN_SPLIT, n - MIN_SPLIT)).item())
   assert n_train >= MIN_SPLIT
   assert n_train <= n - MIN_SPLIT
-
-  train_idx = np.zeros(n, dtype=bool)
-  train_idx[:n_train] = True
-  random.shuffle(train_idx)
+  train_idx = subset_idx(n_train, n, random=random)
   assert np.sum(train_idx) >= MIN_SPLIT
   assert np.sum(~train_idx) >= MIN_SPLIT
   return train_idx
@@ -354,8 +386,8 @@ def ztest_cv_from_stats(mean1, cov1, nobs1, mean2, cov2, nobs2, *, alpha=ALPHA):
   pval : float
     The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
   """
-  _validate_moments_2(mean1, cov1, nobs1)
-  _validate_moments_2(mean2, cov2, nobs2)
+  mean1, cov1, nobs1 = _validate_moments_2(mean1, cov1, nobs1)
+  mean2, cov2, nobs2 = _validate_moments_2(mean2, cov2, nobs2)
   _validate_alpha(alpha)
 
   mean1, std1 = _delta_moments(mean1, cov1)
@@ -398,8 +430,8 @@ def ztest_cv(x, xp, y, yp, *, alpha=ALPHA, health_check_output=True, _ddof=1):
   pval : float
     The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
   """
-  _validate_data(x, xp, paired=True)
-  _validate_data(y, yp, paired=True)
+  x, xp = _validate_data(x, xp, paired=True)
+  y, yp = _validate_data(y, yp, paired=True)
   _validate_alpha(alpha)
 
   if health_check_output:
@@ -467,7 +499,9 @@ def ztest_cv_train(
   pval : float
     The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
   """
-  n_x, n_y, _ = _validate_train_data(x, x_covariates, y, y_covariates)
+  (x, x_covariates, y, y_covariates), (n_x, n_y, _) = _validate_train_data(
+    x, x_covariates, y, y_covariates
+  )
   _validate_alpha(alpha)
   assert 0.0 <= train_frac
   assert train_frac <= 1.0
@@ -558,7 +592,9 @@ def ztest_in_sample_train(
   pval : float
     The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
   """
-  n_x, n_y, _ = _validate_train_data(x, x_covariates, y, y_covariates)
+  (x, x_covariates, y, y_covariates), (n_x, n_y, _) = _validate_train_data(
+    x, x_covariates, y, y_covariates
+  )
   _validate_alpha(alpha)
 
   if clf is None:
@@ -585,6 +621,10 @@ def ztest_in_sample_train(
 
 def _pool_moments(mean, cov, nobs):
   """Warning: this routine is currently only correct for ddof=0."""
+  mean = np.asarray_chkfinite(mean)
+  cov = np.asarray_chkfinite(cov)
+  nobs = np.asarray_chkfinite(nobs)
+
   n_g, d = mean.shape
   assert nobs.shape == (n_g,)
   assert cov.shape == (n_g, d, d)
@@ -689,8 +729,8 @@ def ztest_stacked(x, xp, x_fold, y, yp, y_fold, *, alpha=ALPHA, health_check_out
   pval : float
     The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
   """
-  _validate_data(x, xp, paired=True)
-  _validate_data(y, yp, paired=True)
+  x, xp = _validate_data(x, xp, paired=True)
+  y, yp = _validate_data(y, yp, paired=True)
   _validate_alpha(alpha)
 
   # Current method ignores fold index => we won't validate for now
@@ -753,7 +793,9 @@ def ztest_stacked_train(
   pval : float
     The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
   """
-  n_x, n_y, _ = _validate_train_data(x, x_covariates, y, y_covariates, k_fold=k_fold)
+  (x, x_covariates, y, y_covariates), (n_x, n_y, _) = _validate_train_data(
+    x, x_covariates, y, y_covariates, k_fold=k_fold
+  )
   _validate_alpha(alpha)
 
   if clf is None:
@@ -783,7 +825,7 @@ def ztest_stacked_train(
   return R
 
 
-def ztest_stacked_train_fast(
+def ztest_stacked_train_blockwise(
   x,
   x_covariates,
   y,
@@ -796,12 +838,49 @@ def ztest_stacked_train_fast(
   clf=None,
   random=random,
 ):
-  """More efficient if the fit routine scales worse than O(N), otherwise this will not be more
-  efficient.
+  """Version of `ztest_stacked_train` that is more efficient if the fit routine scales worse than
+  O(N), otherwise this will not be more efficient.
 
-  TODO full doc str
+  Parameters
+  ----------
+  x : ndarray of shape (n,)
+    Outcomes for the treatment group.
+  x_covariates : ndarray of shape (n, d)
+    Covariates/features for the treatment group.
+  y : ndarray of shape (m,)
+    Outcomes for the control group.
+  y_covariates : ndarray of shape (m, d)
+    Covariates/features for the control group.
+  alpha : float
+    Required confidence level, typically this should be 0.95, and must be inside the interval range
+    ``(0, 1]``.
+  k_fold : int
+    The number of folds in the cross validation: `K`.
+  health_check_input : bool
+    If ``True`` perform a health check that ensures the features have the same distribution in
+    treatment and control. If not, issue a warning. It works by training a classifier to predict if
+    a data point is in training or control. This can be slow for a large data set since it requires
+    training a classifier.
+  health_check_output : bool
+    If ``True`` perform a health check that ensures the predictions have the same distribution in
+    treatment and control. If not, issue a warning.
+  clf : sklearn-like regression object
+    An object that has a `fit` and `predict` routine to make predictions.
+  random : RandomState
+    An optional numpy random stream can be passed in for reproducibility.
+
+  Returns
+  -------
+  estimate : float
+    Estimate of the difference in means: ``E[x] - E[y]``.
+  ci : (float, float)
+    Confidence interval (with coverage `alpha`) for the estimate.
+  pval : float
+    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
   """
-  n_x, n_y, _ = _validate_train_data(x, x_covariates, y, y_covariates, k_fold=k_fold)
+  (x, x_covariates, y, y_covariates), (n_x, n_y, _) = _validate_train_data(
+    x, x_covariates, y, y_covariates, k_fold=k_fold
+  )
   _validate_alpha(alpha)
 
   if clf is None:
@@ -837,15 +916,42 @@ def ztest_stacked_train_fast(
   return R
 
 
-def _ztest_stacked_train_blocks(data_iter, *, alpha=ALPHA, clf=None, callback=None):
-  """TODO full doc str."""
+def ztest_stacked_train_load_blockwise(data_iter, *, alpha=ALPHA, clf=None, callback=None):
+  """Version of `ztest_stacked_train_blockwise` that loads the data in blocks to avoid overflowing
+  memory. Using `ztest_stacked_train_blockwise` is faster if all the data fits in memory.
+
+  Parameters
+  ----------
+  data_iter : iterable[callable]
+    An iterable of functions, where each function returns a different cross validation fold. The
+    functions should return data in the format of a tuple: ``(x, x_covariates, y, y_covariates)``.
+    See the parameters of `ztest_stacked_train_blockwise` for details on the shapes of these
+    variables.
+  alpha : float
+    Required confidence level, typically this should be 0.95, and must be inside the interval range
+    ``(0, 1]``.
+  clf : sklearn-like regression object
+    An object that has a `fit` and `predict` routine to make predictions.
+  callback : callable
+    An optional callback that gets called for each cross validation fold in the format
+    ``callback(clf)``. This is sometimes useful for logging.
+
+  Returns
+  -------
+  estimate : float
+    Estimate of the difference in means: ``E[x] - E[y]``.
+  ci : (float, float)
+    Confidence interval (with coverage `alpha`) for the estimate.
+  pval : float
+    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
+  """
   k_fold = len(data_iter)
   assert k_fold >= MIN_FOLD
   _validate_alpha(alpha)
 
   if clf is None:
     clf = PassThruPred()
-  # TODO make sure this works with pass thru, cuped, ...
+
   try:
     clf = [clone(clf) for _ in range(k_fold)]
   except TypeError:
@@ -853,9 +959,10 @@ def _ztest_stacked_train_blocks(data_iter, *, alpha=ALPHA, clf=None, callback=No
 
   # Train a model for each block
   for clf_, data_gen in zip(clf, data_iter):
-    # TODO consider explicit delete of these at end of loop
     (x, x_covariates, y, y_covariates) = data_gen()
-    _validate_train_data_block(x, x_covariates, y, y_covariates)
+    (x, x_covariates, y, y_covariates), _ = _validate_train_data_block(
+      x, x_covariates, y, y_covariates
+    )
 
     z_covariates = np.concatenate((x_covariates, y_covariates), axis=0)
     z = np.concatenate((x, y), axis=0)
@@ -871,9 +978,10 @@ def _ztest_stacked_train_blocks(data_iter, *, alpha=ALPHA, clf=None, callback=No
   cov2 = np.zeros((k_fold, 2, 2))
   nobs2 = np.zeros(k_fold)
   for kk, data_gen in enumerate(data_iter):
-    # TODO consider explicit delete of these at end of loop
     (x, x_covariates, y, y_covariates) = data_gen()
-    n_x, n_y, _ = _validate_train_data_block(x, x_covariates, y, y_covariates)
+    (x, x_covariates, y, y_covariates), (n_x, n_y, _) = _validate_train_data_block(
+      x, x_covariates, y, y_covariates
+    )
 
     # Get predictions from each fold predictor
     xp = np.nan + np.zeros((n_x, k_fold))
@@ -917,7 +1025,9 @@ def _ztest_stacked_mlrate_train(
   _ddof=1,
 ):
   """x is treatment here, y is control."""
-  n_x, n_y, _ = _validate_train_data(x, x_covariates, y, y_covariates, k_fold=k_fold)
+  (x, x_covariates, y, y_covariates), (n_x, n_y, _) = _validate_train_data(
+    x, x_covariates, y, y_covariates, k_fold=k_fold
+  )
   _validate_alpha(alpha)
 
   if health_check_input:
@@ -972,10 +1082,12 @@ def _ztest_stacked_mlrate_train(
   base_var = np.var(y, ddof=_ddof) / (1 - p_hat) + np.var(x, ddof=_ddof) / p_hat
   sample_var = base_var - (pred_var * fac)
   assert np.isfinite(sample_var)
-  # TODO figure out way to clip the predictor such that the sample variance estimate is always
-  # positive. For now, just fall back to regular z test since the predictor is probably crap. Once
-  # we eliminate the fallback we will also eliminate the fallback flag.
   if sample_var <= 0.0:
+    warnings.warn(
+      "MLRATE calculated a negative sample variance. The predictor is probably garbage. "
+      "Falling back on a no variance reduction test.",
+      UserWarning,
+    )
     estimate, (lb, ub), pval = ztest(x, y, alpha=alpha, _ddof=_ddof)
     return estimate, (lb, ub), pval, True
 

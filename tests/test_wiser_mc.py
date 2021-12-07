@@ -16,9 +16,7 @@ RUNS = 1000
 
 print(f"\nCutoff prob in MC tests P = {PVAL_CUTOFF}")
 
-# TODO if we have a t version instead of z we can use small_samples where we currently use medium
-# samples
-
+# For t-test instead of z-test we can use small_samples instead of medium_samples
 small_samples = integers(min_value=1, max_value=20)
 medium_samples = integers(min_value=20, max_value=50)
 big_samples = integers(min_value=100, max_value=500)
@@ -394,7 +392,6 @@ def test_ztest_cv_from_stats_alt(
   seeds,
 )
 def test_ztest_cv_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, alpha, seed):
-  # TODO also test with kNN for clf
   runs = RUNS
   random = np.random.RandomState(seed)
 
@@ -445,7 +442,6 @@ def test_ztest_cv_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, alpha,
   seeds,
 )
 def test_ztest_cv_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_params, alpha, seed):
-  # TODO also test with kNN for clf
   runs = RUNS
   random = np.random.RandomState(seed)
 
@@ -495,7 +491,6 @@ def test_ztest_cv_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_params,
   seeds,
 )
 def test_ztest_stacked_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, alpha, seed):
-  # TODO also test with kNN for clf
   runs = RUNS
   random = np.random.RandomState(seed)
 
@@ -546,7 +541,6 @@ def test_ztest_stacked_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, a
   seeds,
 )
 def test_ztest_stacked_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_params, alpha, seed):
-  # TODO also test with kNN for clf
   runs = RUNS
   random = np.random.RandomState(seed)
 
@@ -595,8 +589,9 @@ def test_ztest_stacked_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_pa
   alphas,
   seeds,
 )
-def test_ztest_stacked_train_fast_null(nobs1, nobs2, std1, std2, shift1, gu_params, alpha, seed):
-  # TODO also test with kNN for clf
+def test_ztest_stacked_train_blockwise_null(
+  nobs1, nobs2, std1, std2, shift1, gu_params, alpha, seed
+):
   runs = RUNS
   random = np.random.RandomState(seed)
 
@@ -624,7 +619,9 @@ def test_ztest_stacked_train_fast_null(nobs1, nobs2, std1, std2, shift1, gu_para
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    R = wiser.ztest_stacked_train_fast(x1, input1, x2, input2, alpha=alpha, clf=clf, random=random)
+    R = wiser.ztest_stacked_train_blockwise(
+      x1, input1, x2, input2, alpha=alpha, clf=clf, random=random
+    )
     results_list.append(R)
 
   pval = gen_validate(results_list, true_value=0.0, alpha=alpha)
@@ -646,10 +643,9 @@ def test_ztest_stacked_train_fast_null(nobs1, nobs2, std1, std2, shift1, gu_para
   alphas,
   seeds,
 )
-def test_ztest_stacked_train_fast_alt(
+def test_ztest_stacked_train_blockwise_alt(
   nobs1, nobs2, std1, std2, shift1, shift2, gu_params, alpha, seed
 ):
-  # TODO also test with kNN for clf
   runs = RUNS
   random = np.random.RandomState(seed)
 
@@ -677,7 +673,9 @@ def test_ztest_stacked_train_fast_alt(
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    R = wiser.ztest_stacked_train_fast(x1, input1, x2, input2, alpha=alpha, clf=clf, random=random)
+    R = wiser.ztest_stacked_train_blockwise(
+      x1, input1, x2, input2, alpha=alpha, clf=clf, random=random
+    )
     results_list.append(R)
 
   pval = gen_validate(results_list, true_value=true_value, alpha=alpha, test_null=False)
@@ -699,7 +697,6 @@ def test_ztest_stacked_train_fast_alt(
   seeds,
 )
 def test_ztest_stacked_mlrate_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, alpha, seed):
-  # TODO also test with kNN for clf
   runs = RUNS
   random = np.random.RandomState(seed)
 
@@ -760,7 +757,6 @@ def test_ztest_stacked_mlrate_train_null(nobs1, nobs2, std1, std2, shift1, gu_pa
 def test_ztest_stacked_mlrate_train_alt(
   nobs1, nobs2, std1, std2, shift1, shift2, gu_params, alpha, seed
 ):
-  # TODO also test with kNN for clf
   runs = RUNS
   random = np.random.RandomState(seed)
 

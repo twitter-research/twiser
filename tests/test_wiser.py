@@ -381,7 +381,7 @@ def test_ztest_stacked_train(xx, yy, alpha, k_fold, seed):
 
 
 @given(data_vector_pairs_4, data_vector_pairs_4, alphas, folds, seeds)
-def test_ztest_stacked_train_fast(xx, yy, alpha, k_fold, seed):
+def test_ztest_stacked_train_blockwise(xx, yy, alpha, k_fold, seed):
   (x, xp) = xx
   (y, yp) = yy
 
@@ -396,7 +396,7 @@ def test_ztest_stacked_train_fast(xx, yy, alpha, k_fold, seed):
   random = np.random.RandomState(seed)
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate_, (lb_, ub_), pval_ = wiser.ztest_stacked_train_fast(
+    estimate_, (lb_, ub_), pval_ = wiser.ztest_stacked_train_blockwise(
       x, xp[:, None], y, yp[:, None], alpha=alpha, k_fold=k_fold, random=random
     )
 
@@ -570,7 +570,7 @@ def test_ztest_stacked_train_to_from_stats(data, alpha, k_fold, seed):
   folds,
   seeds,
 )
-def test_ztest_stacked_train_blocks(data, alpha, k_fold, seed):
+def test_ztest_stacked_train_load_blockwise(data, alpha, k_fold, seed):
   (x, x_covariates, y, y_covariates) = data
 
   n_x = len(x)
@@ -596,12 +596,14 @@ def test_ztest_stacked_train_blocks(data, alpha, k_fold, seed):
 
   data_iter = [partial(data_gen, kk=kk) for kk in range(k_fold)]
 
-  estimate, (lb, ub), pval = wiser._ztest_stacked_train_blocks(data_iter, alpha=alpha, clf=clf)
+  estimate, (lb, ub), pval = wiser.ztest_stacked_train_load_blockwise(
+    data_iter, alpha=alpha, clf=clf
+  )
 
   random = np.random.RandomState(seed)
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate_, (lb_, ub_), pval_ = wiser.ztest_stacked_train_fast(
+    estimate_, (lb_, ub_), pval_ = wiser.ztest_stacked_train_blockwise(
       x,
       x_covariates,
       y,
