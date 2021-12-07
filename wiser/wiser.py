@@ -47,7 +47,6 @@ HEALTH_CHK_PVAL = 1e-6
 MIN_SPLIT = 2  # Min data size so we can estimate mean and variance
 MIN_FOLD = 2  # At least need a train and test in K-fold
 
-# TODO offer z and t versions, t might be better for MC tests of correctness, test="z" or "t"??
 # TODO type hints
 
 
