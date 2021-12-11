@@ -49,10 +49,12 @@ HEALTH_CHK_PVAL = 1e-6
 MIN_SPLIT = 2  # Min data size so we can estimate mean and variance
 MIN_FOLD = 2  # At least need a train and test in K-fold
 
-Model = Any
-Rng = Any
+# Some standard types this package uses
 TestResult = Tuple[float, Tuple[float, float], float]
 DataGen = Callable[[], Tuple[npt.ArrayLike, npt.ArrayLike, npt.ArrayLike, npt.ArrayLike]]
+# Some placeholders that we can later make more restrictive
+Model = Any
+Rng = Any
 
 # Access default numpy rng in way that is short and sphinx friendly
 random = np.random.random.__self__
