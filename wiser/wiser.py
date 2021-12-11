@@ -31,7 +31,7 @@ http://www.degeneratestate.org/posts/2018/Jan/04/reducing-the-variance-of-ab-tes
 """
 import warnings
 from copy import deepcopy
-from typing import Any, Callable, Tuple
+from typing import Any, Callable, Optional, Sequence, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -50,7 +50,9 @@ MIN_SPLIT = 2  # Min data size so we can estimate mean and variance
 MIN_FOLD = 2  # At least need a train and test in K-fold
 
 Model = Any
+Rng = Any
 TestResult = Tuple[float, Tuple[float, float], float]
+DataGen = Callable[[], Tuple[npt.ArrayLike, npt.ArrayLike, npt.ArrayLike, npt.ArrayLike]]
 
 # Access default numpy rng in way that is short and sphinx friendly
 random = np.random.random.__self__
@@ -60,11 +62,11 @@ class PassThruPred(object):
   def __init__(self):
     pass
 
-  def fit(self, x, y):
+  def fit(self, x: npt.ArrayLike, y: npt.ArrayLike) -> None:
     n, = np.shape(y)
     assert x.shape == (n, 1)
 
-  def predict(self, x):
+  def predict(self, x: npt.ArrayLike) -> np.ndarray:
     n, _ = np.shape(x)
     assert x.shape == (n, 1)
     yp = x[:, 0]
@@ -72,13 +74,13 @@ class PassThruPred(object):
 
 
 class Cuped(object):
-  def __init__(self, _ddof=1):
+  def __init__(self, _ddof: int = 1):
     self.mean_x = None
     self.mean_y = None
     self.theta = None
     self.ddof = _ddof
 
-  def fit(self, x, y):
+  def fit(self, x: npt.ArrayLike, y: npt.ArrayLike) -> None:
     n, = np.shape(y)
     assert n >= MIN_SPLIT
     assert x.shape == (n, 1)
@@ -92,7 +94,7 @@ class Cuped(object):
     else:
       self.theta = (np.cov(x, y, ddof=self.ddof)[0, 1] / var_x).item()
 
-  def predict(self, x):
+  def predict(self, x: npt.ArrayLike) -> np.ndarray:
     n, _ = np.shape(x)
     assert x.shape == (n, 1)
     yp = (x[:, 0] - self.mean_x) * self.theta + self.mean_y
@@ -362,14 +364,14 @@ def _delta_moments(mean: np.ndarray, cov: np.ndarray) -> Tuple[float, float]:
   return delta_mean, delta_std
 
 
-def subset_idx(m: int, n: int, random=random) -> np.ndarray:
+def subset_idx(m: int, n: int, random: Rng = random) -> np.ndarray:
   idx = np.zeros(n, dtype=bool)
   idx[:m] = True
   random.shuffle(idx)
   return idx
 
 
-def _make_train_idx(frac: float, n: int, random=random) -> np.ndarray:
+def _make_train_idx(frac: float, n: int, random: Rng = random) -> np.ndarray:
   # There are functions in sklearn we could use to avoid needing to implement this, but we are
   # trying to avoid needing sklearn as a dep outside of the unit tests.
   assert n >= 2 * MIN_SPLIT
@@ -498,7 +500,7 @@ def ztest_cv_train(
   health_check_input: bool = False,
   health_check_output: bool = True,
   clf: Model = None,
-  random=random,
+  random: Rng = random,
   _ddof: int = 1,
 ) -> TestResult:
   """Version of `ztest_cv` that also trains the control variate predictor.
@@ -595,7 +597,7 @@ def ztest_in_sample_train(
   health_check_input: bool = False,
   health_check_output: bool = False,
   clf: Model = None,
-  random=random,
+  random: Rng = random,
   _ddof: int = 1,
 ) -> TestResult:
   """Version of `ztest_cv` that also trains the control variate predictor.
@@ -686,7 +688,7 @@ def _pool_moments(
   return mean_, cov_, nobs_
 
 
-def _fold_idx(n: int, k: int, random=random) -> np.ndarray:
+def _fold_idx(n: int, k: int, random: Rng = random) -> np.ndarray:
   # There are functions in sklearn we could use to avoid needing to implement this, but we are
   # trying to avoid needing sklearn as a dep outside of the unit tests.
   assert n >= k
@@ -816,7 +818,7 @@ def ztest_stacked_train(
   health_check_input: bool = False,
   health_check_output: bool = True,
   clf: Model = None,
-  random=random,
+  random: Rng = random,
 ) -> TestResult:
   """Version of `ztest_stacked` that also trains the control variate predictor.
 
@@ -903,7 +905,7 @@ def ztest_stacked_train_blockwise(
   health_check_input: bool = False,
   health_check_output: bool = True,
   clf: Model = None,
-  random=random,
+  random: Rng = random,
 ) -> TestResult:
   """Version of `ztest_stacked_train` that is more efficient if the fit routine scales worse than
   O(N), otherwise this will not be more efficient.
@@ -984,7 +986,11 @@ def ztest_stacked_train_blockwise(
 
 
 def ztest_stacked_train_load_blockwise(
-  data_iter, *, alpha: float = ALPHA, clf: Model = None, callback: Callable = None
+  data_iter: Sequence[DataGen],
+  *,
+  alpha: float = ALPHA,
+  clf: Model = None,
+  callback: Optional[Callable[[Model], None]] = None,
 ):
   """Version of `ztest_stacked_train_blockwise` that loads the data in blocks to avoid overflowing
   memory. Using `ztest_stacked_train_blockwise` is faster if all the data fits in memory.
@@ -1090,7 +1096,7 @@ def _ztest_stacked_mlrate_train(
   health_check_input: bool = False,
   health_check_output: bool = True,
   clf: Model = None,
-  random=random,
+  random: Rng = random,
   _ddof: int = 1,
 ) -> TestResult:
   """See ztest_stacked_mlrate_train."""
