@@ -31,8 +31,10 @@ http://www.degeneratestate.org/posts/2018/Jan/04/reducing-the-variance-of-ab-tes
 """
 import warnings
 from copy import deepcopy
+from typing import Tuple
 
 import numpy as np
+import numpy.typing as npt
 import scipy.stats as ss
 from sklearn.base import clone
 from sklearn.linear_model import LinearRegression, LogisticRegression
@@ -101,20 +103,20 @@ class Cuped(object):
 # ==== Validation ====
 
 
-def _is_psd2(cov):
+def _is_psd2(cov: npt.ArrayLike) -> bool:
   # This works for 2x2 but not in general, unlike calling cholesky this is happy with semi-def:
   is_psd = (np.trace(cov) >= -1e-8) and (np.linalg.det(cov) >= -1e-8)
   return is_psd
 
 
-def _validate_alpha(alpha):
+def _validate_alpha(alpha: float) -> None:
   # Only scalars coming in, so no need to pass back an np version
   assert np.shape(alpha) == ()
   assert 0.0 < alpha
   assert alpha <= 1.0
 
 
-def _validate_moments_1(mean, std, n):
+def _validate_moments_1(mean: float, std: float, n: int) -> None:
   # Only scalars coming in, so no need to pass back an np version
   assert np.shape(mean) == ()
   assert np.shape(std) == ()
@@ -123,7 +125,9 @@ def _validate_moments_1(mean, std, n):
   assert n > 0
 
 
-def _validate_moments_2(mean, cov, n):
+def _validate_moments_2(
+  mean: npt.ArrayLike, cov: npt.ArrayLike, n: int
+) -> Tuple[np.ndarray, np.ndarray, int]:
   mean = np.asarray_chkfinite(mean)
   cov = np.asarray_chkfinite(cov)
 
@@ -135,7 +139,9 @@ def _validate_moments_2(mean, cov, n):
   return mean, cov, n
 
 
-def _validate_data(x, y, *, paired=False, dtypes=("i", "f")):
+def _validate_data(
+  x: npt.ArrayLike, y: npt.ArrayLike, *, paired: bool = False, dtypes: str = "if"
+) -> Tuple[np.ndarray, np.ndarray]:
   # We can always generalize to allow non-finite input later
   x = np.asarray_chkfinite(x)
   y = np.asarray_chkfinite(y)
@@ -152,7 +158,14 @@ def _validate_data(x, y, *, paired=False, dtypes=("i", "f")):
   return x, y
 
 
-def _validate_train_data(x, x_covariates, y, y_covariates, *, k_fold=2):
+def _validate_train_data(
+  x: npt.ArrayLike,
+  x_covariates: npt.ArrayLike,
+  y: npt.ArrayLike,
+  y_covariates: npt.ArrayLike,
+  *,
+  k_fold: int = 2,
+) -> Tuple[Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray], Tuple[int, int, int]]:
   x = np.asarray_chkfinite(x)
   x_covariates = np.asarray(x_covariates)
   y = np.asarray_chkfinite(y)
@@ -169,7 +182,9 @@ def _validate_train_data(x, x_covariates, y, y_covariates, *, k_fold=2):
   return (x, x_covariates, y, y_covariates), (n_x, n_y, d)
 
 
-def _validate_train_data_block(x, x_covariates, y, y_covariates):
+def _validate_train_data_block(
+  x: npt.ArrayLike, x_covariates: npt.ArrayLike, y: npt.ArrayLike, y_covariates: npt.ArrayLike
+) -> Tuple[Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray], Tuple[int, int, int]]:
   x = np.asarray_chkfinite(x)
   x_covariates = np.asarray(x_covariates)
   y = np.asarray_chkfinite(y)
