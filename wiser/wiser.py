@@ -8,7 +8,6 @@
 # can elim types for output
 # Make _ddof -> ddof
 # review func names
-# k-fold -> $k$-fold, z-test -> $z$-test
 # random state
 # gdoc grammar check docs
 # ztest_stacked_mlrate_train wrapper
@@ -338,7 +337,7 @@ def ztest_from_stats(
 def ztest(
   x: npt.ArrayLike, y: npt.ArrayLike, *, alpha: float = ALPHA, _ddof: int = 1
 ) -> TestResult:
-  """Standard two-sample unpaired z-test. It does not assume equal sample sizes or variances.
+  """Standard two-sample unpaired :math:`z`-test. It does not assume equal sample sizes or variances.
 
   Parameters
   ----------
@@ -464,7 +463,7 @@ def ztest_cv(
   health_check_output: bool = True,
   _ddof: int = 1,
 ) -> TestResult:
-  """Two-sample unpaired z-test with variance reduction using control variarates (CV). It does not
+  """Two-sample unpaired :math:`z`-test with variance reduction using control variarates (CV). It does not
   assume equal sample sizes or variances.
 
   The predictions (control variates) must be derived from features that are independent of
@@ -733,20 +732,20 @@ def ztest_stacked_from_stats(
   ----------
   mean1 : ndarray of shape (k, 2)
     The sample mean of the treatment group outcome and its prediction: ``[mean(x), mean(xp)]``, for
-    each fold in the K-fold cross validation.
+    each fold in the :math:`k`-fold cross validation.
   cov1 : ndarray of shape (k, 2, 2)
     The sample covariance matrix of the treatment group outcome and its prediction:
-    ``cov([x, xp])``, for each fold in the K-fold cross validation.
+    ``cov([x, xp])``, for each fold in the :math:`k`-fold cross validation.
   nobs1 : ndarray of shape (k,)
-    The number of samples in the treatment group, for each fold in the K-fold cross validation.
+    The number of samples in the treatment group, for each fold in the :math:`k`-fold cross validation.
   mean2 : ndarray of shape (k, 2)
     The sample mean of the control group outcome and its prediction: ``[mean(y), mean(yp)]``, for
-    each fold in the K-fold cross validation.
+    each fold in the :math:`k`-fold cross validation.
   cov2 : ndarray of shape (k, 2, 2)
     The sample covariance matrix of the control group outcome and its prediction: ``cov([y, yp])``,
-    for each fold in the K-fold cross validation.
+    for each fold in the :math:`k`-fold cross validation.
   nobs2 : ndarray of shape (k,)
-    The number of samples in the control group, for each fold in the K-fold cross validation.
+    The number of samples in the control group, for each fold in the :math:`k`-fold cross validation.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
     ``(0, 1]``.
@@ -780,7 +779,7 @@ def ztest_stacked(
   alpha: float = ALPHA,
   health_check_output: bool = True,
 ) -> TestResult:
-  """Two-sample unpaired z-test with variance reduction using the *stacked* control variarates (CV)
+  """Two-sample unpaired :math:`z`-test with variance reduction using the *stacked* control variarates (CV)
   method. It does not assume equal sample sizes or variances.
 
   The predictions (control variates) must be derived from features that are independent of
@@ -858,7 +857,7 @@ def ztest_stacked_train(
     Required confidence level, typically this should be 0.95, and must be inside the interval range
     ``(0, 1]``.
   k_fold : int
-    The number of folds in the cross validation: `K`.
+    The number of folds in the cross validation: :math:`k`.
   health_check_input : bool
     If ``True`` perform a health check that ensures the features have the same distribution in
     treatment and control. If not, issue a warning. It works by training a classifier to predict if
@@ -943,7 +942,7 @@ def ztest_stacked_train_blockwise(
     Required confidence level, typically this should be 0.95, and must be inside the interval range
     ``(0, 1]``.
   k_fold : int
-    The number of folds in the cross validation: `K`.
+    The number of folds in the cross validation: :math:`k`.
   health_check_input : bool
     If ``True`` perform a health check that ensures the features have the same distribution in
     treatment and control. If not, issue a warning. It works by training a classifier to predict if
@@ -1217,7 +1216,7 @@ def ztest_stacked_mlrate_train(*args, **kwargs):
     Required confidence level, typically this should be 0.95, and must be inside the interval range
     ``(0, 1]``.
   k_fold : int
-    The number of folds in the cross validation: `K`.
+    The number of folds in the cross validation: :math:`k`.
   health_check_input : bool
     If ``True`` perform a health check that ensures the features have the same distribution in
     treatment and control. If not, issue a warning. It works by training a classifier to predict if
