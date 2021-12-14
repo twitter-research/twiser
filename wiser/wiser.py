@@ -31,8 +31,10 @@ http://www.degeneratestate.org/posts/2018/Jan/04/reducing-the-variance-of-ab-tes
 """
 import warnings
 from copy import deepcopy
+from typing import Any, Callable, Optional, Sequence, Tuple
 
 import numpy as np
+import numpy.typing as npt
 import scipy.stats as ss
 from sklearn.base import clone
 from sklearn.linear_model import LinearRegression, LogisticRegression
@@ -47,8 +49,12 @@ HEALTH_CHK_PVAL = 1e-6
 MIN_SPLIT = 2  # Min data size so we can estimate mean and variance
 MIN_FOLD = 2  # At least need a train and test in K-fold
 
-# TODO type hints
-
+# Some standard types this package uses
+TestResult = Tuple[float, Tuple[float, float], float]
+DataGen = Callable[[], Tuple[npt.ArrayLike, npt.ArrayLike, npt.ArrayLike, npt.ArrayLike]]
+# Some placeholders that we can later make more restrictive
+Model = Any
+Rng = Any
 
 # Access default numpy rng in way that is short and sphinx friendly
 random = np.random.random.__self__
@@ -58,11 +64,11 @@ class PassThruPred(object):
   def __init__(self):
     pass
 
-  def fit(self, x, y):
+  def fit(self, x: npt.ArrayLike, y: npt.ArrayLike) -> None:
     n, = np.shape(y)
     assert x.shape == (n, 1)
 
-  def predict(self, x):
+  def predict(self, x: npt.ArrayLike) -> np.ndarray:
     n, _ = np.shape(x)
     assert x.shape == (n, 1)
     yp = x[:, 0]
@@ -70,13 +76,13 @@ class PassThruPred(object):
 
 
 class Cuped(object):
-  def __init__(self, _ddof=1):
+  def __init__(self, _ddof: int = 1):
     self.mean_x = None
     self.mean_y = None
     self.theta = None
     self.ddof = _ddof
 
-  def fit(self, x, y):
+  def fit(self, x: npt.ArrayLike, y: npt.ArrayLike) -> None:
     n, = np.shape(y)
     assert n >= MIN_SPLIT
     assert x.shape == (n, 1)
@@ -90,7 +96,7 @@ class Cuped(object):
     else:
       self.theta = (np.cov(x, y, ddof=self.ddof)[0, 1] / var_x).item()
 
-  def predict(self, x):
+  def predict(self, x: npt.ArrayLike) -> np.ndarray:
     n, _ = np.shape(x)
     assert x.shape == (n, 1)
     yp = (x[:, 0] - self.mean_x) * self.theta + self.mean_y
@@ -101,20 +107,20 @@ class Cuped(object):
 # ==== Validation ====
 
 
-def _is_psd2(cov):
+def _is_psd2(cov: npt.ArrayLike) -> bool:
   # This works for 2x2 but not in general, unlike calling cholesky this is happy with semi-def:
   is_psd = (np.trace(cov) >= -1e-8) and (np.linalg.det(cov) >= -1e-8)
   return is_psd
 
 
-def _validate_alpha(alpha):
+def _validate_alpha(alpha: float) -> None:
   # Only scalars coming in, so no need to pass back an np version
   assert np.shape(alpha) == ()
   assert 0.0 < alpha
   assert alpha <= 1.0
 
 
-def _validate_moments_1(mean, std, n):
+def _validate_moments_1(mean: float, std: float, n: int) -> None:
   # Only scalars coming in, so no need to pass back an np version
   assert np.shape(mean) == ()
   assert np.shape(std) == ()
@@ -123,7 +129,9 @@ def _validate_moments_1(mean, std, n):
   assert n > 0
 
 
-def _validate_moments_2(mean, cov, n):
+def _validate_moments_2(
+  mean: npt.ArrayLike, cov: npt.ArrayLike, n: int
+) -> Tuple[np.ndarray, np.ndarray, int]:
   mean = np.asarray_chkfinite(mean)
   cov = np.asarray_chkfinite(cov)
 
@@ -135,7 +143,9 @@ def _validate_moments_2(mean, cov, n):
   return mean, cov, n
 
 
-def _validate_data(x, y, *, paired=False, dtypes=("i", "f")):
+def _validate_data(
+  x: npt.ArrayLike, y: npt.ArrayLike, *, paired: bool = False, dtypes: str = "if"
+) -> Tuple[np.ndarray, np.ndarray]:
   # We can always generalize to allow non-finite input later
   x = np.asarray_chkfinite(x)
   y = np.asarray_chkfinite(y)
@@ -152,7 +162,14 @@ def _validate_data(x, y, *, paired=False, dtypes=("i", "f")):
   return x, y
 
 
-def _validate_train_data(x, x_covariates, y, y_covariates, *, k_fold=2):
+def _validate_train_data(
+  x: npt.ArrayLike,
+  x_covariates: npt.ArrayLike,
+  y: npt.ArrayLike,
+  y_covariates: npt.ArrayLike,
+  *,
+  k_fold: int = 2,
+) -> Tuple[Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray], Tuple[int, int, int]]:
   x = np.asarray_chkfinite(x)
   x_covariates = np.asarray(x_covariates)
   y = np.asarray_chkfinite(y)
@@ -169,7 +186,9 @@ def _validate_train_data(x, x_covariates, y, y_covariates, *, k_fold=2):
   return (x, x_covariates, y, y_covariates), (n_x, n_y, d)
 
 
-def _validate_train_data_block(x, x_covariates, y, y_covariates):
+def _validate_train_data_block(
+  x: npt.ArrayLike, x_covariates: npt.ArrayLike, y: npt.ArrayLike, y_covariates: npt.ArrayLike
+) -> Tuple[Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray], Tuple[int, int, int]]:
   x = np.asarray_chkfinite(x)
   x_covariates = np.asarray(x_covariates)
   y = np.asarray_chkfinite(y)
@@ -188,7 +207,9 @@ def _validate_train_data_block(x, x_covariates, y, y_covariates):
 # ==== Health Check Features ====
 
 
-def _health_check_features(x, y, *, train_frac=TRAIN_FRAC, clf=None):
+def _health_check_features(
+  x: np.ndarray, y: np.ndarray, *, train_frac: float = TRAIN_FRAC, clf: Model = None
+) -> None:
   random = np.random.RandomState(0)
 
   n = min(len(x), len(y))
@@ -220,7 +241,7 @@ def _health_check_features(x, y, *, train_frac=TRAIN_FRAC, clf=None):
     warnings.warn(f"Input features have different distribution with p = {pval}", UserWarning)
 
 
-def _health_check_output(x, y):
+def _health_check_output(x: np.ndarray, y: np.ndarray) -> None:
   # KS test is not valid in the presence of dupes
   z = np.concatenate((x, y), axis=0)
   # This is faster than set operations for large z, but bloom-filter would be more mem efficient
@@ -238,7 +259,16 @@ def _health_check_output(x, y):
 # ==== Basic ====
 
 
-def ztest_from_stats(mean1, std1, nobs1, mean2, std2, nobs2, *, alpha=ALPHA):
+def ztest_from_stats(
+  mean1: float,
+  std1: float,
+  nobs1: int,
+  mean2: float,
+  std2: float,
+  nobs2: int,
+  *,
+  alpha: float = ALPHA,
+) -> TestResult:
   """Version of `ztest` that works off the sufficient statistics of the data.
 
   Parameters
@@ -288,7 +318,9 @@ def ztest_from_stats(mean1, std1, nobs1, mean2, std2, nobs2, *, alpha=ALPHA):
   return estimate, (lb, ub), pval
 
 
-def ztest(x, y, *, alpha=ALPHA, _ddof=1):
+def ztest(
+  x: npt.ArrayLike, y: npt.ArrayLike, *, alpha: float = ALPHA, _ddof: int = 1
+) -> TestResult:
   """Standard two-sample unpaired z-test. It does not assume equal sample sizes or variances.
 
   Parameters
@@ -310,7 +342,7 @@ def ztest(x, y, *, alpha=ALPHA, _ddof=1):
   pval : float
     The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
   """
-  x, y = _validate_data(x, y, dtypes=("b", "u", "i", "f"))
+  x, y = _validate_data(x, y, dtypes="buif")
   _validate_alpha(alpha)
 
   R = ztest_from_stats(
@@ -328,20 +360,20 @@ def ztest(x, y, *, alpha=ALPHA, _ddof=1):
 # ==== Control Variate ====
 
 
-def _delta_moments(mean, cov):
+def _delta_moments(mean: np.ndarray, cov: np.ndarray) -> Tuple[float, float]:
   delta_mean = mean[0] - mean[1]
   delta_std = np.sqrt(cov[0, 0] + cov[1, 1] - 2 * cov[0, 1])
   return delta_mean, delta_std
 
 
-def subset_idx(m, n, random=random):
+def subset_idx(m: int, n: int, random: Rng = random) -> np.ndarray:
   idx = np.zeros(n, dtype=bool)
   idx[:m] = True
   random.shuffle(idx)
   return idx
 
 
-def _make_train_idx(frac, n, random=random):
+def _make_train_idx(frac: float, n: int, random: Rng = random) -> np.ndarray:
   # There are functions in sklearn we could use to avoid needing to implement this, but we are
   # trying to avoid needing sklearn as a dep outside of the unit tests.
   assert n >= 2 * MIN_SPLIT
@@ -355,7 +387,16 @@ def _make_train_idx(frac, n, random=random):
   return train_idx
 
 
-def ztest_cv_from_stats(mean1, cov1, nobs1, mean2, cov2, nobs2, *, alpha=ALPHA):
+def ztest_cv_from_stats(
+  mean1: npt.ArrayLike,
+  cov1: npt.ArrayLike,
+  nobs1: int,
+  mean2: npt.ArrayLike,
+  cov2: npt.ArrayLike,
+  nobs2: int,
+  *,
+  alpha: float = ALPHA,
+) -> TestResult:
   """Version of `ztest_cv` that works off the sufficient statistics of the data.
 
   Parameters
@@ -396,7 +437,16 @@ def ztest_cv_from_stats(mean1, cov1, nobs1, mean2, cov2, nobs2, *, alpha=ALPHA):
   return R
 
 
-def ztest_cv(x, xp, y, yp, *, alpha=ALPHA, health_check_output=True, _ddof=1):
+def ztest_cv(
+  x: npt.ArrayLike,
+  xp: npt.ArrayLike,
+  y: npt.ArrayLike,
+  yp: npt.ArrayLike,
+  *,
+  alpha: float = ALPHA,
+  health_check_output: bool = True,
+  _ddof: int = 1,
+) -> TestResult:
   """Two-sample unpaired z-test with variance reduction using control variarates (CV). It does not
   assume equal sample sizes or variances.
 
@@ -442,19 +492,19 @@ def ztest_cv(x, xp, y, yp, *, alpha=ALPHA, health_check_output=True, _ddof=1):
 
 
 def ztest_cv_train(
-  x,
-  x_covariates,
-  y,
-  y_covariates,
+  x: npt.ArrayLike,
+  x_covariates: npt.ArrayLike,
+  y: npt.ArrayLike,
+  y_covariates: npt.ArrayLike,
   *,
-  alpha=ALPHA,
-  train_frac=TRAIN_FRAC,
-  health_check_input=False,
-  health_check_output=True,
-  clf=None,
-  random=random,
-  _ddof=1,
-):
+  alpha: float = ALPHA,
+  train_frac: float = TRAIN_FRAC,
+  health_check_input: bool = False,
+  health_check_output: bool = True,
+  clf: Model = None,
+  random: Rng = random,
+  _ddof: int = 1,
+) -> TestResult:
   """Version of `ztest_cv` that also trains the control variate predictor.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
@@ -540,18 +590,18 @@ def ztest_cv_train(
 
 
 def ztest_in_sample_train(
-  x,
-  x_covariates,
-  y,
-  y_covariates,
+  x: npt.ArrayLike,
+  x_covariates: npt.ArrayLike,
+  y: npt.ArrayLike,
+  y_covariates: npt.ArrayLike,
   *,
-  alpha=ALPHA,
-  health_check_input=False,
-  health_check_output=False,
-  clf=None,
-  random=random,
-  _ddof=1,
-):
+  alpha: float = ALPHA,
+  health_check_input: bool = False,
+  health_check_output: bool = False,
+  clf: Model = None,
+  random: Rng = random,
+  _ddof: int = 1,
+) -> TestResult:
   """Version of `ztest_cv` that also trains the control variate predictor.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
@@ -619,7 +669,9 @@ def ztest_in_sample_train(
 # ==== Implement Stacked version ====
 
 
-def _pool_moments(mean, cov, nobs):
+def _pool_moments(
+  mean: npt.ArrayLike, cov: npt.ArrayLike, nobs: npt.ArrayLike
+) -> Tuple[np.ndarray, np.ndarray, int]:
   """Warning: this routine is currently only correct for ddof=0."""
   mean = np.asarray_chkfinite(mean)
   cov = np.asarray_chkfinite(cov)
@@ -638,7 +690,7 @@ def _pool_moments(mean, cov, nobs):
   return mean_, cov_, nobs_
 
 
-def _fold_idx(n, k, random=random):
+def _fold_idx(n: int, k: int, random: Rng = random) -> np.ndarray:
   # There are functions in sklearn we could use to avoid needing to implement this, but we are
   # trying to avoid needing sklearn as a dep outside of the unit tests.
   assert n >= k
@@ -648,7 +700,16 @@ def _fold_idx(n, k, random=random):
   return idx
 
 
-def ztest_stacked_from_stats(mean1, cov1, nobs1, mean2, cov2, nobs2, *, alpha=ALPHA):
+def ztest_stacked_from_stats(
+  mean1: npt.ArrayLike,
+  cov1: npt.ArrayLike,
+  nobs1: npt.ArrayLike,
+  mean2: npt.ArrayLike,
+  cov2: npt.ArrayLike,
+  nobs2: npt.ArrayLike,
+  *,
+  alpha: float = ALPHA,
+) -> TestResult:
   """Version of `ztest_stacked` that works off the sufficient statistics of the data.
 
   Parameters
@@ -691,7 +752,17 @@ def ztest_stacked_from_stats(mean1, cov1, nobs1, mean2, cov2, nobs2, *, alpha=AL
   return R
 
 
-def ztest_stacked(x, xp, x_fold, y, yp, y_fold, *, alpha=ALPHA, health_check_output=True):
+def ztest_stacked(
+  x: npt.ArrayLike,
+  xp: npt.ArrayLike,
+  x_fold: npt.ArrayLike,
+  y: npt.ArrayLike,
+  yp: npt.ArrayLike,
+  y_fold: npt.ArrayLike,
+  *,
+  alpha: float = ALPHA,
+  health_check_output: bool = True,
+) -> TestResult:
   """Two-sample unpaired z-test with variance reduction using the *stacked* control variarates (CV)
   method. It does not assume equal sample sizes or variances.
 
@@ -739,18 +810,18 @@ def ztest_stacked(x, xp, x_fold, y, yp, y_fold, *, alpha=ALPHA, health_check_out
 
 
 def ztest_stacked_train(
-  x,
-  x_covariates,
-  y,
-  y_covariates,
+  x: npt.ArrayLike,
+  x_covariates: npt.ArrayLike,
+  y: npt.ArrayLike,
+  y_covariates: npt.ArrayLike,
   *,
-  alpha=ALPHA,
-  k_fold=K_FOLD,
-  health_check_input=False,
-  health_check_output=True,
-  clf=None,
-  random=random,
-):
+  alpha: float = ALPHA,
+  k_fold: int = K_FOLD,
+  health_check_input: bool = False,
+  health_check_output: bool = True,
+  clf: Model = None,
+  random: Rng = random,
+) -> TestResult:
   """Version of `ztest_stacked` that also trains the control variate predictor.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
@@ -826,18 +897,18 @@ def ztest_stacked_train(
 
 
 def ztest_stacked_train_blockwise(
-  x,
-  x_covariates,
-  y,
-  y_covariates,
+  x: npt.ArrayLike,
+  x_covariates: npt.ArrayLike,
+  y: npt.ArrayLike,
+  y_covariates: npt.ArrayLike,
   *,
-  alpha=ALPHA,
-  k_fold=K_FOLD,
-  health_check_input=False,
-  health_check_output=True,
-  clf=None,
-  random=random,
-):
+  alpha: float = ALPHA,
+  k_fold: int = K_FOLD,
+  health_check_input: bool = False,
+  health_check_output: bool = True,
+  clf: Model = None,
+  random: Rng = random,
+) -> TestResult:
   """Version of `ztest_stacked_train` that is more efficient if the fit routine scales worse than
   O(N), otherwise this will not be more efficient.
 
@@ -916,7 +987,13 @@ def ztest_stacked_train_blockwise(
   return R
 
 
-def ztest_stacked_train_load_blockwise(data_iter, *, alpha=ALPHA, clf=None, callback=None):
+def ztest_stacked_train_load_blockwise(
+  data_iter: Sequence[DataGen],
+  *,
+  alpha: float = ALPHA,
+  clf: Model = None,
+  callback: Optional[Callable[[Model], None]] = None,
+):
   """Version of `ztest_stacked_train_blockwise` that loads the data in blocks to avoid overflowing
   memory. Using `ztest_stacked_train_blockwise` is faster if all the data fits in memory.
 
@@ -1011,20 +1088,20 @@ def ztest_stacked_train_load_blockwise(data_iter, *, alpha=ALPHA, clf=None, call
 
 
 def _ztest_stacked_mlrate_train(
-  x,
-  x_covariates,
-  y,
-  y_covariates,
+  x: npt.ArrayLike,
+  x_covariates: npt.ArrayLike,
+  y: npt.ArrayLike,
+  y_covariates: npt.ArrayLike,
   *,
-  alpha=ALPHA,
-  k_fold=K_FOLD,
-  health_check_input=False,
-  health_check_output=True,
-  clf=None,
-  random=random,
-  _ddof=1,
-):
-  """x is treatment here, y is control."""
+  alpha: float = ALPHA,
+  k_fold: int = K_FOLD,
+  health_check_input: bool = False,
+  health_check_output: bool = True,
+  clf: Model = None,
+  random: Rng = random,
+  _ddof: int = 1,
+) -> TestResult:
+  """See ztest_stacked_mlrate_train."""
   (x, x_covariates, y, y_covariates), (n_x, n_y, _) = _validate_train_data(
     x, x_covariates, y, y_covariates, k_fold=k_fold
   )
