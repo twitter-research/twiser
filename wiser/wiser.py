@@ -10,9 +10,7 @@
 # review func names
 # random state
 # gdoc grammar check docs
-# ztest_stacked_mlrate_train wrapper
 # Make API overview closer to start, rename section
-# Credits section
 # Use term ATE?
 # Proper references, guo
 # clf -> predictor?
@@ -1198,7 +1196,20 @@ def _ztest_stacked_mlrate_train(
   return estimate, (lb, ub), pval, False
 
 
-def ztest_stacked_mlrate_train(*args, **kwargs):
+def ztest_stacked_mlrate_train(
+  x: npt.ArrayLike,
+  x_covariates: npt.ArrayLike,
+  y: npt.ArrayLike,
+  y_covariates: npt.ArrayLike,
+  *,
+  alpha: float = ALPHA,
+  k_fold: int = K_FOLD,
+  health_check_input: bool = False,
+  health_check_output: bool = True,
+  clf: Model = None,
+  random: Rng = random,
+  _ddof: int = 1,
+):
   """Very similar to :func:`ztest_stacked_train` but uses the method of Guo et. al. to try to
   account for the correlations between cross validation folds.
 
@@ -1246,5 +1257,17 @@ def ztest_stacked_mlrate_train(*args, **kwargs):
   ----------
   https://drive.google.com/file/d/153hxSPJjvVejZS8ot_W8cm6S_YGO0o88/view
   """
-  estimate, (lb, ub), pval, _ = _ztest_stacked_mlrate_train(*args, **kwargs)
+  estimate, (lb, ub), pval, _ = _ztest_stacked_mlrate_train(
+    x=x,
+    x_covariates=x_covariates,
+    y=y,
+    y_covariates=y_covariates,
+    alpha=alpha,
+    k_fold=k_fold,
+    health_check_input=health_check_input,
+    health_check_output=health_check_output,
+    clf=clf,
+    random=random,
+    _ddof=_ddof,
+  )
   return estimate, (lb, ub), pval
