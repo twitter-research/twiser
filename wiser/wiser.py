@@ -14,7 +14,6 @@
 # Make API overview closer to start, rename section
 # Credits section
 # Use term ATE?
-# Inter package function links
 # Proper references, guo
 # clf -> predictor?
 
@@ -285,7 +284,7 @@ def ztest_from_stats(
   *,
   alpha: float = ALPHA,
 ) -> TestResult:
-  """Version of `ztest` that works off the sufficient statistics of the data.
+  """Version of :func:`ztest` that works off the sufficient statistics of the data.
 
   Parameters
   ----------
@@ -413,7 +412,7 @@ def ztest_cv_from_stats(
   *,
   alpha: float = ALPHA,
 ) -> TestResult:
-  """Version of `ztest_cv` that works off the sufficient statistics of the data.
+  """Version of :func:`ztest_cv` that works off the sufficient statistics of the data.
 
   Parameters
   ----------
@@ -521,7 +520,7 @@ def ztest_cv_train(
   random: Rng = random,
   _ddof: int = 1,
 ) -> TestResult:
-  """Version of `ztest_cv` that also trains the control variate predictor.
+  """Version of :func:`ztest_cv` that also trains the control variate predictor.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
   in treatment and control have a different distributions then the test may be invalid.
@@ -618,7 +617,7 @@ def ztest_in_sample_train(
   random: Rng = random,
   _ddof: int = 1,
 ) -> TestResult:
-  """Version of `ztest_cv` that also trains the control variate predictor.
+  """Version of :func:`ztest_cv` that also trains the control variate predictor.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
   in treatment and control have a different distributions then the test may be invalid.
@@ -726,7 +725,7 @@ def ztest_stacked_from_stats(
   *,
   alpha: float = ALPHA,
 ) -> TestResult:
-  """Version of `ztest_stacked` that works off the sufficient statistics of the data.
+  """Version of :func:`ztest_stacked` that works off the sufficient statistics of the data.
 
   Parameters
   ----------
@@ -838,7 +837,7 @@ def ztest_stacked_train(
   clf: Model = None,
   random: Rng = random,
 ) -> TestResult:
-  """Version of `ztest_stacked` that also trains the control variate predictor.
+  """Version of :func:`ztest_stacked` that also trains the control variate predictor.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
   in treatment and control have a different distributions then the test may be invalid.
@@ -925,7 +924,7 @@ def ztest_stacked_train_blockwise(
   clf: Model = None,
   random: Rng = random,
 ) -> TestResult:
-  """Version of `ztest_stacked_train` that is more efficient if the fit routine scales worse than
+  """Version of :func:`ztest_stacked_train` that is more efficient if the fit routine scales worse than
   O(N), otherwise this will not be more efficient.
 
   Parameters
@@ -1010,15 +1009,15 @@ def ztest_stacked_train_load_blockwise(
   clf: Model = None,
   callback: Optional[Callable[[Model], None]] = None,
 ):
-  """Version of `ztest_stacked_train_blockwise` that loads the data in blocks to avoid overflowing
-  memory. Using `ztest_stacked_train_blockwise` is faster if all the data fits in memory.
+  """Version of :func:`ztest_stacked_train_blockwise` that loads the data in blocks to avoid overflowing
+  memory. Using :func:`ztest_stacked_train_blockwise` is faster if all the data fits in memory.
 
   Parameters
   ----------
   data_iter : iterable[callable]
     An iterable of functions, where each function returns a different cross validation fold. The
     functions should return data in the format of a tuple: ``(x, x_covariates, y, y_covariates)``.
-    See the parameters of `ztest_stacked_train_blockwise` for details on the shapes of these
+    See the parameters of :func:`ztest_stacked_train_blockwise` for details on the shapes of these
     variables.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
@@ -1196,7 +1195,7 @@ def _ztest_stacked_mlrate_train(
 
 
 def ztest_stacked_mlrate_train(*args, **kwargs):
-  """Very similar to `ztest_stacked_train` but uses the method of Guo et. al. to try to account for
+  """Very similar to :func:`ztest_stacked_train` but uses the method of Guo et. al. to try to account for
   the correlations between cross validation folds.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
