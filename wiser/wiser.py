@@ -39,7 +39,6 @@ import scipy.stats as ss
 from sklearn.base import clone
 from sklearn.linear_model import LinearRegression, LogisticRegression
 
-# TODO make 0.05?? Technically this is coverage not alpha.
 # Defaults
 ALPHA = 0.95
 K_FOLD = 5
