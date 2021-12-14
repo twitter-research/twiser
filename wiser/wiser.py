@@ -336,7 +336,8 @@ def ztest_from_stats(
 def ztest(
   x: npt.ArrayLike, y: npt.ArrayLike, *, alpha: float = ALPHA, _ddof: int = 1
 ) -> TestResult:
-  """Standard two-sample unpaired :math:`z`-test. It does not assume equal sample sizes or variances.
+  """Standard two-sample unpaired :math:`z`-test. It does not assume equal sample sizes or
+  variances.
 
   Parameters
   ----------
@@ -462,8 +463,8 @@ def ztest_cv(
   health_check_output: bool = True,
   _ddof: int = 1,
 ) -> TestResult:
-  """Two-sample unpaired :math:`z`-test with variance reduction using control variarates (CV). It does not
-  assume equal sample sizes or variances.
+  """Two-sample unpaired :math:`z`-test with variance reduction using control variarates (CV). It
+  does not assume equal sample sizes or variances.
 
   The predictions (control variates) must be derived from features that are independent of
   assignment to treatment or control. If the predictions in treatment and control have a different
@@ -736,7 +737,8 @@ def ztest_stacked_from_stats(
     The sample covariance matrix of the treatment group outcome and its prediction:
     ``cov([x, xp])``, for each fold in the :math:`k`-fold cross validation.
   nobs1 : ndarray of shape (k,)
-    The number of samples in the treatment group, for each fold in the :math:`k`-fold cross validation.
+    The number of samples in the treatment group, for each fold in the :math:`k`-fold cross
+    validation.
   mean2 : ndarray of shape (k, 2)
     The sample mean of the control group outcome and its prediction: ``[mean(y), mean(yp)]``, for
     each fold in the :math:`k`-fold cross validation.
@@ -744,7 +746,8 @@ def ztest_stacked_from_stats(
     The sample covariance matrix of the control group outcome and its prediction: ``cov([y, yp])``,
     for each fold in the :math:`k`-fold cross validation.
   nobs2 : ndarray of shape (k,)
-    The number of samples in the control group, for each fold in the :math:`k`-fold cross validation.
+    The number of samples in the control group, for each fold in the :math:`k`-fold cross
+    validation.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
     ``(0, 1]``.
@@ -778,8 +781,8 @@ def ztest_stacked(
   alpha: float = ALPHA,
   health_check_output: bool = True,
 ) -> TestResult:
-  """Two-sample unpaired :math:`z`-test with variance reduction using the *stacked* control variarates (CV)
-  method. It does not assume equal sample sizes or variances.
+  """Two-sample unpaired :math:`z`-test with variance reduction using the *stacked* control
+  variarates (CV) method. It does not assume equal sample sizes or variances.
 
   The predictions (control variates) must be derived from features that are independent of
   assignment to treatment or control. If the predictions in treatment and control have a different
@@ -924,8 +927,8 @@ def ztest_stacked_train_blockwise(
   clf: Model = None,
   random: Rng = random,
 ) -> TestResult:
-  """Version of :func:`ztest_stacked_train` that is more efficient if the fit routine scales worse than
-  O(N), otherwise this will not be more efficient.
+  """Version of :func:`ztest_stacked_train` that is more efficient if the fit routine scales worse
+  than O(N), otherwise this will not be more efficient.
 
   Parameters
   ----------
@@ -1009,8 +1012,9 @@ def ztest_stacked_train_load_blockwise(
   clf: Model = None,
   callback: Optional[Callable[[Model], None]] = None,
 ):
-  """Version of :func:`ztest_stacked_train_blockwise` that loads the data in blocks to avoid overflowing
-  memory. Using :func:`ztest_stacked_train_blockwise` is faster if all the data fits in memory.
+  """Version of :func:`ztest_stacked_train_blockwise` that loads the data in blocks to avoid
+  overflowing memory. Using :func:`ztest_stacked_train_blockwise` is faster if all the data fits in
+  memory.
 
   Parameters
   ----------
@@ -1195,8 +1199,8 @@ def _ztest_stacked_mlrate_train(
 
 
 def ztest_stacked_mlrate_train(*args, **kwargs):
-  """Very similar to :func:`ztest_stacked_train` but uses the method of Guo et. al. to try to account for
-  the correlations between cross validation folds.
+  """Very similar to :func:`ztest_stacked_train` but uses the method of Guo et. al. to try to
+  account for the correlations between cross validation folds.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
   in treatment and control have a different distributions then the test may be invalid.
