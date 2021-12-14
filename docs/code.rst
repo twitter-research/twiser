@@ -7,3 +7,4 @@ Code Overview
 .. automodule:: wiser.wiser
    :members:
    :exclude-members:
+   :member-order: bysource
