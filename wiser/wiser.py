@@ -1,6 +1,24 @@
 # Copyright 2021 Twitter, Inc.
 # SPDX-License-Identifier: Apache-2.0
 
+# TODO
+# re-write doc str at top
+# order the funcs for what we want to see in docs
+# intersphinx for all args
+# can elim types for output
+# Make _ddof -> ddof
+# review func names
+# k-fold -> $k$-fold, z-test -> $z$-test
+# random state
+# gdoc grammar check docs
+# ztest_stacked_mlrate_train wrapper
+# Make API overview closer to start, rename section
+# Credits section
+# Use term ATE?
+# Inter package function links
+# Proper references, guo
+# clf -> predictor?
+
 """The basic layout of the package is as follows:
 
    - The API is inspired by `scipy.stats`: `ttest_ind` and `ttest_ind_from_stats`, but does not
