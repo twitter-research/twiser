@@ -339,9 +339,9 @@ def ztest(
 
   Parameters
   ----------
-  x : ndarray of shape (n,)
+  x : :class:`numpy:numpy.ndarray` of shape of shape (n,)
     Outcomes for the treatment group.
-  y : ndarray of shape (m,)
+  y : :class:`numpy:numpy.ndarray` of shape (m,)
     Outcomes for the control group.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
@@ -415,16 +415,16 @@ def ztest_cv_from_stats(
 
   Parameters
   ----------
-  mean1 : ndarray of shape (2,)
+  mean1 : :class:`numpy:numpy.ndarray` of shape (2,)
     The sample mean of the treatment group outcome and its prediction: ``[mean(x), mean(xp)]``.
-  cov1 : ndarray of shape (2, 2)
+  cov1 : :class:`numpy:numpy.ndarray` of shape (2, 2)
     The sample covariance matrix of the treatment group outcome and its prediction:
     ``cov([x, xp])``.
   nobs1 : int
     The number of samples in the treatment group.
-  mean2 : ndarray of shape (2,)
+  mean2 : :class:`numpy:numpy.ndarray` of shape (2,)
     The sample mean of the control group outcome and its prediction: ``[mean(y), mean(yp)]``.
-  cov2 : ndarray of shape (2, 2)
+  cov2 : :class:`numpy:numpy.ndarray` of shape (2, 2)
     The sample covariance matrix of the control group outcome and its prediction: ``cov([y, yp])``.
   nobs2 : int
     The number of samples in the control group.
@@ -470,13 +470,13 @@ def ztest_cv(
 
   Parameters
   ----------
-  x : ndarray of shape (n,)
+  x : :class:`numpy:numpy.ndarray` of shape (n,)
     Outcomes for the treatment group.
-  xp : ndarray of shape (n,)
+  xp : :class:`numpy:numpy.ndarray` of shape (n,)
     Predicted outcomes for the treatment group.
-  y : ndarray of shape (m,)
+  y : :class:`numpy:numpy.ndarray` of shape (m,)
     Outcomes for the control group.
-  yp : ndarray of shape (m,)
+  yp : :class:`numpy:numpy.ndarray` of shape (m,)
     Predicted outcomes for the control group.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
@@ -526,13 +526,13 @@ def ztest_cv_train(
 
   Parameters
   ----------
-  x : ndarray of shape (n,)
+  x : :class:`numpy:numpy.ndarray` of shape (n,)
     Outcomes for the treatment group.
-  x_covariates : ndarray of shape (n, d)
+  x_covariates : :class:`numpy:numpy.ndarray` of shape (n, d)
     Covariates/features for the treatment group.
-  y : ndarray of shape (m,)
+  y : :class:`numpy:numpy.ndarray` of shape (m,)
     Outcomes for the control group.
-  y_covariates : ndarray of shape (m, d)
+  y_covariates : :class:`numpy:numpy.ndarray` of shape (m, d)
     Covariates/features for the control group.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
@@ -623,13 +623,13 @@ def ztest_in_sample_train(
 
   Parameters
   ----------
-  x : ndarray of shape (n,)
+  x : :class:`numpy:numpy.ndarray` of shape (n,)
     Outcomes for the treatment group.
-  x_covariates : ndarray of shape (n, d)
+  x_covariates : :class:`numpy:numpy.ndarray` of shape (n, d)
     Covariates/features for the treatment group.
-  y : ndarray of shape (m,)
+  y : :class:`numpy:numpy.ndarray` of shape (m,)
     Outcomes for the control group.
-  y_covariates : ndarray of shape (m, d)
+  y_covariates : :class:`numpy:numpy.ndarray` of shape (m, d)
     Covariates/features for the control group.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
@@ -728,22 +728,22 @@ def ztest_stacked_from_stats(
 
   Parameters
   ----------
-  mean1 : ndarray of shape (k, 2)
+  mean1 : :class:`numpy:numpy.ndarray` of shape (k, 2)
     The sample mean of the treatment group outcome and its prediction: ``[mean(x), mean(xp)]``, for
     each fold in the :math:`k`-fold cross validation.
-  cov1 : ndarray of shape (k, 2, 2)
+  cov1 : :class:`numpy:numpy.ndarray` of shape (k, 2, 2)
     The sample covariance matrix of the treatment group outcome and its prediction:
     ``cov([x, xp])``, for each fold in the :math:`k`-fold cross validation.
-  nobs1 : ndarray of shape (k,)
+  nobs1 : :class:`numpy:numpy.ndarray` of shape (k,)
     The number of samples in the treatment group, for each fold in the :math:`k`-fold cross
     validation.
-  mean2 : ndarray of shape (k, 2)
+  mean2 : :class:`numpy:numpy.ndarray` of shape (k, 2)
     The sample mean of the control group outcome and its prediction: ``[mean(y), mean(yp)]``, for
     each fold in the :math:`k`-fold cross validation.
-  cov2 : ndarray of shape (k, 2, 2)
+  cov2 : :class:`numpy:numpy.ndarray` of shape (k, 2, 2)
     The sample covariance matrix of the control group outcome and its prediction: ``cov([y, yp])``,
     for each fold in the :math:`k`-fold cross validation.
-  nobs2 : ndarray of shape (k,)
+  nobs2 : :class:`numpy:numpy.ndarray` of shape (k,)
     The number of samples in the control group, for each fold in the :math:`k`-fold cross
     validation.
   alpha : float
@@ -788,17 +788,17 @@ def ztest_stacked(
 
   Parameters
   ----------
-  x : ndarray of shape (n,)
+  x : :class:`numpy:numpy.ndarray` of shape (n,)
     Outcomes for the treatment group.
-  xp : ndarray of shape (n,)
+  xp : :class:`numpy:numpy.ndarray` of shape (n,)
     Predicted outcomes for the treatment group derived from a cross-validation routine.
-  x_fold : ndarray of shape (n,)
+  x_fold : :class:`numpy:numpy.ndarray` of shape (n,)
     The cross validation fold assignment for each data point in treatment, of `dtype` `int`.
-  y : ndarray of shape (m,)
+  y : :class:`numpy:numpy.ndarray` of shape (m,)
     Outcomes for the control group.
-  yp : ndarray of shape (m,)
+  yp : :class:`numpy:numpy.ndarray` of shape (m,)
     Predicted outcomes for the control group derived from a cross-validation routine.
-  y_fold : ndarray of shape (n,)
+  y_fold : :class:`numpy:numpy.ndarray` of shape (n,)
     The cross validation fold assignment for each data point in control, of `dtype` `int`.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
@@ -845,13 +845,13 @@ def ztest_stacked_train(
 
   Parameters
   ----------
-  x : ndarray of shape (n,)
+  x : :class:`numpy:numpy.ndarray` of shape (n,)
     Outcomes for the treatment group.
-  x_covariates : ndarray of shape (n, d)
+  x_covariates : :class:`numpy:numpy.ndarray` of shape (n, d)
     Covariates/features for the treatment group.
-  y : ndarray of shape (m,)
+  y : :class:`numpy:numpy.ndarray` of shape (m,)
     Outcomes for the control group.
-  y_covariates : ndarray of shape (m, d)
+  y_covariates : :class:`numpy:numpy.ndarray` of shape (m, d)
     Covariates/features for the control group.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
@@ -930,13 +930,13 @@ def ztest_stacked_train_blockwise(
 
   Parameters
   ----------
-  x : ndarray of shape (n,)
+  x : :class:`numpy:numpy.ndarray` of shape (n,)
     Outcomes for the treatment group.
-  x_covariates : ndarray of shape (n, d)
+  x_covariates : :class:`numpy:numpy.ndarray` of shape (n, d)
     Covariates/features for the treatment group.
-  y : ndarray of shape (m,)
+  y : :class:`numpy:numpy.ndarray` of shape (m,)
     Outcomes for the control group.
-  y_covariates : ndarray of shape (m, d)
+  y_covariates : :class:`numpy:numpy.ndarray` of shape (m, d)
     Covariates/features for the control group.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
@@ -1218,13 +1218,13 @@ def ztest_stacked_mlrate_train(
 
   Parameters
   ----------
-  x : ndarray of shape (n,)
+  x : :class:`numpy:numpy.ndarray` of shape (n,)
     Outcomes for the treatment group.
-  x_covariates : ndarray of shape (n, d)
+  x_covariates : :class:`numpy:numpy.ndarray` of shape (n, d)
     Covariates/features for the treatment group.
-  y : ndarray of shape (m,)
+  y : :class:`numpy:numpy.ndarray` of shape (m,)
     Outcomes for the control group.
-  y_covariates : ndarray of shape (m, d)
+  y_covariates : :class:`numpy:numpy.ndarray` of shape (m, d)
     Covariates/features for the control group.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
