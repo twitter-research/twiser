@@ -2,8 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # TODO
-# Proper references, guo
-# Make API overview closer to start, rename section
 # gdoc grammar check docs
 # clf -> predictor?
 # review func names
@@ -19,6 +17,9 @@ The package currently supports four kinds of tests:
 * cv: This is a held out control variate method (train the predictor on a held out set).
 * stacked: This is a :math:`k`-fold cross validation type setup when training the predictor.
 * mlrate: This is the MLRATE method.
+
+The distinction betwen basic, cv, and stacked is discussed in [1]_. While the MLRATE method comes
+from [2]_.
 
 Each method has a few different ways to call it:
 
@@ -38,7 +39,14 @@ Every statistical test in this package returns the same set of variables:
 
 References
 ----------
-http://www.degeneratestate.org/posts/2018/Jan/04/reducing-the-variance-of-ab-test-using-prior-information/
+.. [1] `I. Barr. Reducing the variance of A/B tests using prior information. Degenerate State, Jun
+   2018
+   <https://www.degeneratestate.org/posts/2018/Jan/04/reducing-the-variance-of-ab-test-using-prior-information/>`_.
+
+.. [2] `Y. Guo, D. Coey, M. Konutgan, W. Li, C. Schoener, and M. Goldman. Machine learning for
+   variance reduction in online experiments. In The 7th Annual Conference on Digital Experimentation
+   @ MIT, 2020
+   <https://arxiv.org/abs/2106.07263>`_.
 """
 import warnings
 from copy import deepcopy
@@ -1233,8 +1241,8 @@ def ztest_stacked_mlrate_train(
   random: Rng = None,
   ddof: int = 1,
 ):
-  r"""Very similar to :func:`ztest_stacked_train` but uses the method of Guo et. al. to try to
-  account for the correlations between cross validation folds.
+  r"""Very similar to :func:`ztest_stacked_train` but uses the method of [2]_ to try to account for
+  the correlations between cross validation folds.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
   in treatment and control have a different distributions then the test may be invalid.
@@ -1277,10 +1285,6 @@ def ztest_stacked_mlrate_train(
     Confidence interval (with coverage `alpha`) for the estimate.
   pval :
     The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
-
-  References
-  ----------
-  https://drive.google.com/file/d/153hxSPJjvVejZS8ot_W8cm6S_YGO0o88/view
   """
   estimate, (lb, ub), pval, _ = _ztest_stacked_mlrate_train(
     x=x,
