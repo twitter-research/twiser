@@ -2,12 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # TODO
-# order the funcs for what we want to see in docs
 # Proper references, guo
 # Make API overview closer to start, rename section
 # gdoc grammar check docs
 # clf -> predictor?
 # review func names
+# order the funcs for what we want to see in docs
 
 """The goal of this package is to make hypothesis testing using variance reduction methods as easy
 as using :func:`scipy.stats.ttest_ind` and :func:`scipy.stats.ttest_ind_from_stats`. At lot of the

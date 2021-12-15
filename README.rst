@@ -1,6 +1,6 @@
-*****************
-The WISER Package
-*****************
+***************
+Getting Started
+***************
 
 Advanced variance reduction methods.
 
@@ -26,8 +26,6 @@ Support
 =======
 
 Create a `new issue <https://github.com/twitter-research/wiser/issues/new/choose>`_ or `join a discussion <https://github.com/twitter-research/wiser/discussions>`_.
-
-.. include:: ../CONTRIBUTING.rst
 
 Links
 =====
