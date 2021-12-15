@@ -231,9 +231,9 @@ def _health_check_features(
   n = min(len(x), len(y))
 
   if len(x) < n:
-    x = x[subset_idx(n, len(x), random=random), :]
+    x = x[_subset_idx(n, len(x), random=random), :]
   if len(y) < n:
-    y = y[subset_idx(n, len(y), random=random), :]
+    y = y[_subset_idx(n, len(y), random=random), :]
   assert len(x) == n
   assert len(y) == n
 
@@ -378,8 +378,7 @@ def _delta_moments(mean: np.ndarray, cov: np.ndarray) -> Tuple[float, float]:
   return delta_mean, delta_std
 
 
-def subset_idx(m: int, n: int, random: Rng = np_random) -> np.ndarray:
-  # TODO make private
+def _subset_idx(m: int, n: int, random: Rng = np_random) -> np.ndarray:
   idx = np.zeros(n, dtype=bool)
   idx[:m] = True
   random.shuffle(idx)
@@ -394,7 +393,7 @@ def _make_train_idx(frac: float, n: int, random: Rng = np_random) -> np.ndarray:
   n_train = int(np.ceil(np.clip(frac * n, MIN_SPLIT, n - MIN_SPLIT)).item())
   assert n_train >= MIN_SPLIT
   assert n_train <= n - MIN_SPLIT
-  train_idx = subset_idx(n_train, n, random=random)
+  train_idx = _subset_idx(n_train, n, random=random)
   assert np.sum(train_idx) >= MIN_SPLIT
   assert np.sum(~train_idx) >= MIN_SPLIT
   return train_idx
