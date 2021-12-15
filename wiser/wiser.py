@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # TODO
-# gdoc grammar check docs
 # clf -> predictor?
 # review func names
 # order the funcs for what we want to see in docs

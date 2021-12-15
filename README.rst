@@ -15,7 +15,7 @@ The package is installed with:
 
    pip install wiser
 
-See the `GitHub <https://github.com/twitter/wiser>`_, `PyPI <https://pypi.org/project/wiser/>`_, and `Read the Docs <https://wiser.readthedocs.io/en/latest/>`_.
+See `GitHub <https://github.com/twitter/wiser>`_, `PyPI <https://pypi.org/project/wiser/>`_, and `Read the Docs <https://wiser.readthedocs.io/en/latest/>`_.
 
 Example Usage
 =============
