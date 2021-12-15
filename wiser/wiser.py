@@ -68,7 +68,7 @@ TestResult = Tuple[float, Tuple[float, float], float]
 DataGen = Callable[[], Tuple[npt.ArrayLike, npt.ArrayLike, npt.ArrayLike, npt.ArrayLike]]
 # Some placeholders that we can later make more restrictive
 Model = Any
-Rng = np.random.RandomState
+Rng = Optional[np.random.RandomState]
 
 # Access default numpy rng in way that is short and sphinx friendly
 np_random = np.random.random.__self__
@@ -553,7 +553,7 @@ def ztest_cv_train(
     treatment and control. If not, issue a warning.
   clf : sklearn-like regression object
     An object that has a `fit` and `predict` routine to make predictions.
-  random : RandomState
+  random : :class:`numpy:numpy.random.RandomState`
     An optional numpy random stream can be passed in for reproducibility.
 
   Returns
@@ -649,7 +649,7 @@ def ztest_in_sample_train(
     treatment and control. If not, issue a warning.
   clf : sklearn-like regression object
     An object that has a `fit` and `predict` routine to make predictions.
-  random : RandomState
+  random : :class:`numpy:numpy.random.RandomState`
     An optional numpy random stream can be passed in for reproducibility.
 
   Returns
@@ -964,7 +964,7 @@ def ztest_stacked_train_blockwise(
     treatment and control. If not, issue a warning.
   clf : sklearn-like regression object
     An object that has a `fit` and `predict` routine to make predictions.
-  random : RandomState
+  random : :class:`numpy:numpy.random.RandomState`
     An optional numpy random stream can be passed in for reproducibility.
 
   Returns
@@ -1258,7 +1258,7 @@ def ztest_stacked_mlrate_train(
     treatment and control. If not, issue a warning.
   clf : sklearn-like regression object
     An object that has a `fit` and `predict` routine to make predictions.
-  random : RandomState
+  random : :class:`numpy:numpy.random.RandomState`
     An optional numpy random stream can be passed in for reproducibility.
 
   Returns
