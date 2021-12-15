@@ -68,10 +68,10 @@ TestResult = Tuple[float, Tuple[float, float], float]
 DataGen = Callable[[], Tuple[npt.ArrayLike, npt.ArrayLike, npt.ArrayLike, npt.ArrayLike]]
 # Some placeholders that we can later make more restrictive
 Model = Any
-Rng = Any
+Rng = np.random.RandomState
 
 # Access default numpy rng in way that is short and sphinx friendly
-random = np.random.random.__self__
+np_random = np.random.random.__self__
 
 
 class PassThruPred(object):
@@ -335,7 +335,7 @@ def ztest_from_stats(
 def ztest(
   x: npt.ArrayLike, y: npt.ArrayLike, *, alpha: float = ALPHA, _ddof: int = 1
 ) -> TestResult:
-  """Standard two-sample unpaired :math:`z`-test. It does not assume equal sample sizes or
+  r"""Standard two-sample unpaired :math:`z`-test. It does not assume equal sample sizes or
   variances.
 
   Parameters
@@ -381,14 +381,15 @@ def _delta_moments(mean: np.ndarray, cov: np.ndarray) -> Tuple[float, float]:
   return delta_mean, delta_std
 
 
-def subset_idx(m: int, n: int, random: Rng = random) -> np.ndarray:
+def subset_idx(m: int, n: int, random: Rng = np_random) -> np.ndarray:
+  # TODO make private
   idx = np.zeros(n, dtype=bool)
   idx[:m] = True
   random.shuffle(idx)
   return idx
 
 
-def _make_train_idx(frac: float, n: int, random: Rng = random) -> np.ndarray:
+def _make_train_idx(frac: float, n: int, random: Rng = np_random) -> np.ndarray:
   # There are functions in sklearn we could use to avoid needing to implement this, but we are
   # trying to avoid needing sklearn as a dep outside of the unit tests.
   assert n >= 2 * MIN_SPLIT
@@ -412,7 +413,7 @@ def ztest_cv_from_stats(
   *,
   alpha: float = ALPHA,
 ) -> TestResult:
-  """Version of :func:`ztest_cv` that works off the sufficient statistics of the data.
+  r"""Version of :func:`ztest_cv` that works off the sufficient statistics of the data.
 
   Parameters
   ----------
@@ -462,7 +463,7 @@ def ztest_cv(
   health_check_output: bool = True,
   _ddof: int = 1,
 ) -> TestResult:
-  """Two-sample unpaired :math:`z`-test with variance reduction using control variarates (CV). It
+  r"""Two-sample unpaired :math:`z`-test with variance reduction using control variarates (CV). It
   does not assume equal sample sizes or variances.
 
   The predictions (control variates) must be derived from features that are independent of
@@ -517,10 +518,10 @@ def ztest_cv_train(
   health_check_input: bool = False,
   health_check_output: bool = True,
   clf: Model = None,
-  random: Rng = random,
+  random: Rng = None,
   _ddof: int = 1,
 ) -> TestResult:
-  """Version of :func:`ztest_cv` that also trains the control variate predictor.
+  r"""Version of :func:`ztest_cv` that also trains the control variate predictor.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
   in treatment and control have a different distributions then the test may be invalid.
@@ -574,6 +575,9 @@ def ztest_cv_train(
   if clf is None:
     clf = PassThruPred()
 
+  if random is None:
+    random = np_random
+
   if health_check_input:
     _health_check_features(x_covariates, y_covariates)
 
@@ -614,10 +618,10 @@ def ztest_in_sample_train(
   health_check_input: bool = False,
   health_check_output: bool = False,
   clf: Model = None,
-  random: Rng = random,
+  random: Rng = None,
   _ddof: int = 1,
 ) -> TestResult:
-  """Version of :func:`ztest_cv` that also trains the control variate predictor.
+  r"""Version of :func:`ztest_cv` that also trains the control variate predictor.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
   in treatment and control have a different distributions then the test may be invalid.
@@ -665,6 +669,9 @@ def ztest_in_sample_train(
   if clf is None:
     clf = PassThruPred()
 
+  if random is None:
+    random = np_random
+
   if health_check_input:
     _health_check_features(x_covariates, y_covariates)
 
@@ -705,7 +712,7 @@ def _pool_moments(
   return mean_, cov_, nobs_
 
 
-def _fold_idx(n: int, k: int, random: Rng = random) -> np.ndarray:
+def _fold_idx(n: int, k: int, random: Rng = np_random) -> np.ndarray:
   # There are functions in sklearn we could use to avoid needing to implement this, but we are
   # trying to avoid needing sklearn as a dep outside of the unit tests.
   assert n >= k
@@ -725,7 +732,7 @@ def ztest_stacked_from_stats(
   *,
   alpha: float = ALPHA,
 ) -> TestResult:
-  """Version of :func:`ztest_stacked` that works off the sufficient statistics of the data.
+  r"""Version of :func:`ztest_stacked` that works off the sufficient statistics of the data.
 
   Parameters
   ----------
@@ -780,7 +787,7 @@ def ztest_stacked(
   alpha: float = ALPHA,
   health_check_output: bool = True,
 ) -> TestResult:
-  """Two-sample unpaired :math:`z`-test with variance reduction using the *stacked* control
+  r"""Two-sample unpaired :math:`z`-test with variance reduction using the *stacked* control
   variarates (CV) method. It does not assume equal sample sizes or variances.
 
   The predictions (control variates) must be derived from features that are independent of
@@ -837,9 +844,9 @@ def ztest_stacked_train(
   health_check_input: bool = False,
   health_check_output: bool = True,
   clf: Model = None,
-  random: Rng = random,
+  random: Rng = None,
 ) -> TestResult:
-  """Version of :func:`ztest_stacked` that also trains the control variate predictor.
+  r"""Version of :func:`ztest_stacked` that also trains the control variate predictor.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
   in treatment and control have a different distributions then the test may be invalid.
@@ -869,7 +876,7 @@ def ztest_stacked_train(
     treatment and control. If not, issue a warning.
   clf : sklearn-like regression object
     An object that has a `fit` and `predict` routine to make predictions.
-  random : RandomState
+  random : :class:`numpy:numpy.random.RandomState`
     An optional numpy random stream can be passed in for reproducibility.
 
   Returns
@@ -888,6 +895,9 @@ def ztest_stacked_train(
 
   if clf is None:
     clf = PassThruPred()
+
+  if random is None:
+    random = np_random
 
   if health_check_input:
     _health_check_features(x_covariates, y_covariates)
@@ -924,9 +934,9 @@ def ztest_stacked_train_blockwise(
   health_check_input: bool = False,
   health_check_output: bool = True,
   clf: Model = None,
-  random: Rng = random,
+  random: Rng = None,
 ) -> TestResult:
-  """Version of :func:`ztest_stacked_train` that is more efficient if the fit routine scales worse
+  r"""Version of :func:`ztest_stacked_train` that is more efficient if the fit routine scales worse
   than O(N), otherwise this will not be more efficient.
 
   Parameters
@@ -974,6 +984,9 @@ def ztest_stacked_train_blockwise(
   if clf is None:
     clf = PassThruPred()
 
+  if random is None:
+    random = np_random
+
   if health_check_input:
     _health_check_features(x_covariates, y_covariates)
 
@@ -1011,7 +1024,7 @@ def ztest_stacked_train_load_blockwise(
   clf: Model = None,
   callback: Optional[Callable[[Model], None]] = None,
 ) -> TestResult:
-  """Version of :func:`ztest_stacked_train_blockwise` that loads the data in blocks to avoid
+  r"""Version of :func:`ztest_stacked_train_blockwise` that loads the data in blocks to avoid
   overflowing memory. Using :func:`ztest_stacked_train_blockwise` is faster if all the data fits in
   memory.
 
@@ -1116,7 +1129,7 @@ def _ztest_stacked_mlrate_train(
   health_check_input: bool = False,
   health_check_output: bool = True,
   clf: Model = None,
-  random: Rng = random,
+  random: Rng = None,
   _ddof: int = 1,
 ) -> TestResult:
   """See ztest_stacked_mlrate_train."""
@@ -1130,6 +1143,9 @@ def _ztest_stacked_mlrate_train(
 
   if clf is None:
     clf = PassThruPred()
+
+  if random is None:
+    random = np_random
 
   # Sample the folds
   fold_idx_x = _fold_idx(n_x, k_fold, random=random)
@@ -1208,10 +1224,10 @@ def ztest_stacked_mlrate_train(
   health_check_input: bool = False,
   health_check_output: bool = True,
   clf: Model = None,
-  random: Rng = random,
+  random: Rng = None,
   _ddof: int = 1,
 ):
-  """Very similar to :func:`ztest_stacked_train` but uses the method of Guo et. al. to try to
+  r"""Very similar to :func:`ztest_stacked_train` but uses the method of Guo et. al. to try to
   account for the correlations between cross validation folds.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
