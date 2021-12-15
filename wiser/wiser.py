@@ -14,32 +14,35 @@
 # Proper references, guo
 # clf -> predictor?
 
-"""The basic layout of the package is as follows:
+"""The goal of this package is to make hypothesis testing using variance reduction methods as easy
+as using :func:`scipy.stats.ttest_ind` and :func:`scipy.stats.ttest_ind_from_stats`. At lot of the
+API is designed to match that simplicity as much as possible.
 
-   - The API is inspired by `scipy.stats`: `ttest_ind` and `ttest_ind_from_stats`, but does not
-     match exactly
-   - Each kind of test has 3 ways to call it:
-      - from stats: for calling using sufficient statistics of data only
-      - basic: call using the data and the control variate prediction
-      - train: also train and evaluate the predictor in the routine
-          - for lack of a better choice, I assume the model has a sklearn-style `fit()` and
-            `predict()` API
-   - Each function returns: a best estimate, a confidence interval, and p-value
-      - The p-value and confidence interval should be consistent with each other
-   - There are four kinds of tests here:
-      - basic z-test: from the textbooks
-      - cv: for control variate
-      - stacked: for k-fold cross validation type setup
-      - See the blog for the distinctions. In general, the train version calls -> the basic version
-        calls -> from stats version.
+The package currently supports four kinds of tests:
 
-Later:
-   - An option to supply a out-of-experiment group for training the predictor
-   - A streaming stats version to be more compatible with DDG: E.g. E[X], E[X^2] instead of E[X] and
-     Var[X].
-   - Support weighted samples, better for a bootstrap analysis
-   - Make the routines need to be broadcast friendly
+* basic :math:`z`-test: This is the one from the intro stats textbooks.
+* cv: This is a held out control variate method (train the predictor on a held out set).
+* stacked: This is a :math:`k`-fold cross validation type setup when training the predictor.
+* mlrate: This is the MLRATE method.
 
+Each method has a few different ways to call it:
+
+* basic: Call the method using the raw data and the control variate predictions.
+* from stats: Call the method using sufficient statistics of the data and predictions only.
+* train: Pass in a predictor object to train and evaluate the predictor in the routine.
+
+  * For lack of a better choice, I assume the model has a sklearn-style `fit()` and `predict()` API.
+
+Every statistical test in this package returns the same set of variables:
+
+* A best estimate (of the difference of means)
+* A confidence interval (on the difference of means)
+* A p-value under the H0 that the two means are equal
+
+  * The p-value and confidence interval are tested to be consistent with each under inversion.
+
+References
+----------
 http://www.degeneratestate.org/posts/2018/Jan/04/reducing-the-variance-of-ab-test-using-prior-information/
 """
 import warnings
