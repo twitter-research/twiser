@@ -8,7 +8,7 @@
 # order the funcs for what we want to see in docs
 
 """The goal of this package is to make hypothesis testing using variance reduction methods as easy
-as using :func:`scipy.stats.ttest_ind` and :func:`scipy.stats.ttest_ind_from_stats`. At lot of the
+as using :func:`scipy.stats.ttest_ind` and :func:`scipy.stats.ttest_ind_from_stats`. A lot of the
 API is designed to match that simplicity as much as possible.
 
 The package currently supports four kinds of tests:
@@ -18,7 +18,7 @@ The package currently supports four kinds of tests:
 * stacked: This is a :math:`k`-fold cross validation type setup when training the predictor.
 * mlrate: This is the MLRATE method.
 
-The distinction betwen basic, cv, and stacked is discussed in [1]_. While the MLRATE method comes
+The distinction between basic, cv, and stacked is discussed in [1]_. While the MLRATE method comes
 from [2]_.
 
 Each method has a few different ways to call it:
@@ -531,7 +531,7 @@ def ztest_cv_train(
   r"""Version of :func:`ztest_cv` that also trains the control variate predictor.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
-  in treatment and control have a different distributions then the test may be invalid.
+  in treatment and control have a different distribution then the test may be invalid.
 
   Parameters
   ----------
@@ -634,7 +634,7 @@ def ztest_in_sample_train(
   r"""Version of :func:`ztest_cv` that also trains the control variate predictor.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
-  in treatment and control have a different distributions then the test may be invalid.
+  in treatment and control have a different distribution then the test may be invalid.
 
   Parameters
   ----------
@@ -814,13 +814,13 @@ def ztest_stacked(
   xp : :class:`numpy:numpy.ndarray` of shape (n,)
     Predicted outcomes for the treatment group derived from a cross-validation routine.
   x_fold : :class:`numpy:numpy.ndarray` of shape (n,)
-    The cross validation fold assignment for each data point in treatment, of `dtype` `int`.
+    The cross validation fold assignment for each data point in treatment (of `dtype` `int`).
   y : :class:`numpy:numpy.ndarray` of shape (m,)
     Outcomes for the control group.
   yp : :class:`numpy:numpy.ndarray` of shape (m,)
     Predicted outcomes for the control group derived from a cross-validation routine.
   y_fold : :class:`numpy:numpy.ndarray` of shape (n,)
-    The cross validation fold assignment for each data point in control, of `dtype` `int`.
+    The cross validation fold assignment for each data point in control (of `dtype` `int`).
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
     :math:`(0, 1]`.
@@ -862,7 +862,7 @@ def ztest_stacked_train(
   r"""Version of :func:`ztest_stacked` that also trains the control variate predictor.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
-  in treatment and control have a different distributions then the test may be invalid.
+  in treatment and control have a different distribution then the test may be invalid.
 
   Parameters
   ----------
@@ -1245,7 +1245,7 @@ def ztest_stacked_mlrate_train(
   the correlations between cross validation folds.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
-  in treatment and control have a different distributions then the test may be invalid.
+  in treatment and control have a different distribution then the test may be invalid.
 
   Parameters
   ----------
