@@ -3,15 +3,11 @@
 
 # TODO
 # order the funcs for what we want to see in docs
-# can elim types for output
-# Make _ddof -> ddof
-# review func names
-# random state
-# gdoc grammar check docs
-# Make API overview closer to start, rename section
-# Use term ATE?
 # Proper references, guo
+# Make API overview closer to start, rename section
+# gdoc grammar check docs
 # clf -> predictor?
+# review func names
 
 """The goal of this package is to make hypothesis testing using variance reduction methods as easy
 as using :func:`scipy.stats.ttest_ind` and :func:`scipy.stats.ttest_ind_from_stats`. At lot of the
@@ -90,11 +86,11 @@ class PassThruPred(object):
 
 
 class Cuped(object):
-  def __init__(self, _ddof: int = 1):
+  def __init__(self, ddof: int = 1):
     self.mean_x = None
     self.mean_y = None
     self.theta = None
-    self.ddof = _ddof
+    self.ddof = ddof
 
   def fit(self, x: npt.ArrayLike, y: npt.ArrayLike) -> None:
     n, = np.shape(y)
@@ -132,6 +128,12 @@ def _validate_alpha(alpha: float) -> None:
   assert np.shape(alpha) == ()
   assert 0.0 < alpha
   assert alpha <= 1.0
+
+
+def _validate_ddof(ddof: int) -> None:
+  # Only scalars coming in, so no need to pass back an np version
+  assert np.shape(ddof) == ()
+  assert ddof >= 0
 
 
 def _validate_moments_1(mean: float, std: float, n: int) -> None:
@@ -332,9 +334,7 @@ def ztest_from_stats(
   return estimate, (lb, ub), pval
 
 
-def ztest(
-  x: npt.ArrayLike, y: npt.ArrayLike, *, alpha: float = ALPHA, _ddof: int = 1
-) -> TestResult:
+def ztest(x: npt.ArrayLike, y: npt.ArrayLike, *, alpha: float = ALPHA, ddof: int = 1) -> TestResult:
   r"""Standard two-sample unpaired :math:`z`-test. It does not assume equal sample sizes or
   variances.
 
@@ -347,6 +347,8 @@ def ztest(
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
     :math:`(0, 1]`.
+  ddof : int
+    The "Delta Degrees of Freedom" argument for computing sample variances.
 
   Returns
   -------
@@ -359,15 +361,10 @@ def ztest(
   """
   x, y = _validate_data(x, y, dtypes="buif")
   _validate_alpha(alpha)
+  _validate_ddof(ddof)
 
   R = ztest_from_stats(
-    np.mean(x),
-    np.std(x, ddof=_ddof),
-    len(x),
-    np.mean(y),
-    np.std(y, ddof=_ddof),
-    len(y),
-    alpha=alpha,
+    np.mean(x), np.std(x, ddof=ddof), len(x), np.mean(y), np.std(y, ddof=ddof), len(y), alpha=alpha
   )
   return R
 
@@ -461,7 +458,7 @@ def ztest_cv(
   *,
   alpha: float = ALPHA,
   health_check_output: bool = True,
-  _ddof: int = 1,
+  ddof: int = 1,
 ) -> TestResult:
   r"""Two-sample unpaired :math:`z`-test with variance reduction using control variarates (CV). It
   does not assume equal sample sizes or variances.
@@ -486,6 +483,8 @@ def ztest_cv(
   health_check_output : bool
     If ``True`` perform a health check that ensures the predictions have the same distribution in
     treatment and control. If not, issue a warning.
+  ddof : int
+    The "Delta Degrees of Freedom" argument for computing sample variances.
 
   Returns
   -------
@@ -499,11 +498,12 @@ def ztest_cv(
   x, xp = _validate_data(x, xp, paired=True)
   y, yp = _validate_data(y, yp, paired=True)
   _validate_alpha(alpha)
+  _validate_ddof(ddof)
 
   if health_check_output:
     _health_check_output(xp, yp)
 
-  R = ztest(x - xp, y - yp, alpha=alpha, _ddof=_ddof)
+  R = ztest(x - xp, y - yp, alpha=alpha, ddof=ddof)
   return R
 
 
@@ -519,7 +519,7 @@ def ztest_cv_train(
   health_check_output: bool = True,
   clf: Model = None,
   random: Rng = None,
-  _ddof: int = 1,
+  ddof: int = 1,
 ) -> TestResult:
   r"""Version of :func:`ztest_cv` that also trains the control variate predictor.
 
@@ -555,6 +555,8 @@ def ztest_cv_train(
     An object that has a `fit` and `predict` routine to make predictions.
   random : :class:`numpy:numpy.random.RandomState`
     An optional numpy random stream can be passed in for reproducibility.
+  ddof : int
+    The "Delta Degrees of Freedom" argument for computing sample variances.
 
   Returns
   -------
@@ -571,6 +573,7 @@ def ztest_cv_train(
   _validate_alpha(alpha)
   assert 0.0 <= train_frac
   assert train_frac <= 1.0
+  _validate_ddof(ddof)
 
   if clf is None:
     clf = PassThruPred()
@@ -602,7 +605,7 @@ def ztest_cv_train(
     y[~train_idx_y],
     yp,
     alpha=alpha,
-    _ddof=_ddof,
+    ddof=ddof,
     health_check_output=health_check_output,
   )
   return R
@@ -619,7 +622,7 @@ def ztest_in_sample_train(
   health_check_output: bool = False,
   clf: Model = None,
   random: Rng = None,
-  _ddof: int = 1,
+  ddof: int = 1,
 ) -> TestResult:
   r"""Version of :func:`ztest_cv` that also trains the control variate predictor.
 
@@ -651,6 +654,8 @@ def ztest_in_sample_train(
     An object that has a `fit` and `predict` routine to make predictions.
   random : :class:`numpy:numpy.random.RandomState`
     An optional numpy random stream can be passed in for reproducibility.
+  ddof : int
+    The "Delta Degrees of Freedom" argument for computing sample variances.
 
   Returns
   -------
@@ -665,6 +670,7 @@ def ztest_in_sample_train(
     x, x_covariates, y, y_covariates
   )
   _validate_alpha(alpha)
+  _validate_ddof(ddof)
 
   if clf is None:
     clf = PassThruPred()
@@ -684,7 +690,7 @@ def ztest_in_sample_train(
   yp = clf.predict(y_covariates)
   assert np.all(np.isfinite(yp))
 
-  R = ztest_cv(x, xp, y, yp, alpha=alpha, _ddof=_ddof, health_check_output=health_check_output)
+  R = ztest_cv(x, xp, y, yp, alpha=alpha, ddof=ddof, health_check_output=health_check_output)
   return R
 
 
@@ -829,7 +835,7 @@ def ztest_stacked(
   _validate_alpha(alpha)
 
   # Current method ignores fold index => we won't validate for now
-  R = ztest_cv(x, xp, y, yp, alpha=alpha, _ddof=0, health_check_output=health_check_output)
+  R = ztest_cv(x, xp, y, yp, alpha=alpha, ddof=0, health_check_output=health_check_output)
   return R
 
 
@@ -1130,13 +1136,14 @@ def _ztest_stacked_mlrate_train(
   health_check_output: bool = True,
   clf: Model = None,
   random: Rng = None,
-  _ddof: int = 1,
+  ddof: int = 1,
 ) -> TestResult:
   """See ztest_stacked_mlrate_train."""
   (x, x_covariates, y, y_covariates), (n_x, n_y, _) = _validate_train_data(
     x, x_covariates, y, y_covariates, k_fold=k_fold
   )
   _validate_alpha(alpha)
+  _validate_ddof(ddof)
 
   if health_check_input:
     _health_check_features(x_covariates, y_covariates)
@@ -1189,8 +1196,8 @@ def _ztest_stacked_mlrate_train(
 
   # Get a sample variance based on results of the regression
   fac = (alpha_coef[2] * p_hat + (alpha_coef[2] + alpha_coef[3]) * (1 - p_hat)) ** 2
-  pred_var = np.var(reg_mat[:, 1], ddof=_ddof) / (p_hat * (1 - p_hat))
-  base_var = np.var(y, ddof=_ddof) / (1 - p_hat) + np.var(x, ddof=_ddof) / p_hat
+  pred_var = np.var(reg_mat[:, 1], ddof=ddof) / (p_hat * (1 - p_hat))
+  base_var = np.var(y, ddof=ddof) / (1 - p_hat) + np.var(x, ddof=ddof) / p_hat
   sample_var = base_var - (pred_var * fac)
   assert np.isfinite(sample_var)
   if sample_var <= 0.0:
@@ -1199,7 +1206,7 @@ def _ztest_stacked_mlrate_train(
       "Falling back on a no variance reduction test.",
       UserWarning,
     )
-    estimate, (lb, ub), pval = ztest(x, y, alpha=alpha, _ddof=_ddof)
+    estimate, (lb, ub), pval = ztest(x, y, alpha=alpha, ddof=ddof)
     return estimate, (lb, ub), pval, True
 
   # Extract Gaussian parameters of sampling distribution
@@ -1225,7 +1232,7 @@ def ztest_stacked_mlrate_train(
   health_check_output: bool = True,
   clf: Model = None,
   random: Rng = None,
-  _ddof: int = 1,
+  ddof: int = 1,
 ):
   r"""Very similar to :func:`ztest_stacked_train` but uses the method of Guo et. al. to try to
   account for the correlations between cross validation folds.
@@ -1260,6 +1267,8 @@ def ztest_stacked_mlrate_train(
     An object that has a `fit` and `predict` routine to make predictions.
   random : :class:`numpy:numpy.random.RandomState`
     An optional numpy random stream can be passed in for reproducibility.
+  ddof : int
+    The "Delta Degrees of Freedom" argument for computing sample variances.
 
   Returns
   -------
@@ -1285,6 +1294,6 @@ def ztest_stacked_mlrate_train(
     health_check_output=health_check_output,
     clf=clf,
     random=random,
-    _ddof=_ddof,
+    ddof=ddof,
   )
   return estimate, (lb, ub), pval
