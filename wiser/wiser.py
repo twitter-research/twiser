@@ -346,7 +346,7 @@ def ztest(
     Outcomes for the control group.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
-    ``(0, 1]``.
+    :math:`(0, 1]`.
 
   Returns
   -------
@@ -431,7 +431,7 @@ def ztest_cv_from_stats(
     The number of samples in the control group.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
-    ``(0, 1]``.
+    :math:`(0, 1]`.
 
   Returns
   -------
@@ -481,7 +481,7 @@ def ztest_cv(
     Predicted outcomes for the control group.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
-    ``(0, 1]``.
+    :math:`(0, 1]`.
   health_check_output : bool
     If ``True`` perform a health check that ensures the predictions have the same distribution in
     treatment and control. If not, issue a warning.
@@ -537,7 +537,7 @@ def ztest_cv_train(
     Covariates/features for the control group.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
-    ``(0, 1]``.
+    :math:`(0, 1]`.
   train_frac : float
     The fraction of data to hold out for training the predictors. To ensure test validity, we do not
     use the same data for training the predictors and performing the test. This must be inside the
@@ -634,7 +634,7 @@ def ztest_in_sample_train(
     Covariates/features for the control group.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
-    ``(0, 1]``.
+    :math:`(0, 1]`.
   health_check_input : bool
     If ``True`` perform a health check that ensures the features have the same distribution in
     treatment and control. If not, issue a warning. It works by training a classifier to predict if
@@ -749,7 +749,7 @@ def ztest_stacked_from_stats(
     validation.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
-    ``(0, 1]``.
+    :math:`(0, 1]`.
 
   Returns
   -------
@@ -803,7 +803,7 @@ def ztest_stacked(
     The cross validation fold assignment for each data point in control, of `dtype` `int`.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
-    ``(0, 1]``.
+    :math:`(0, 1]`.
   health_check_output : bool
     If ``True`` perform a health check that ensures the predictions have the same distribution in
     treatment and control. If not, issue a warning.
@@ -856,7 +856,7 @@ def ztest_stacked_train(
     Covariates/features for the control group.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
-    ``(0, 1]``.
+    :math:`(0, 1]`.
   k_fold : int
     The number of folds in the cross validation: :math:`k`.
   health_check_input : bool
@@ -941,7 +941,7 @@ def ztest_stacked_train_blockwise(
     Covariates/features for the control group.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
-    ``(0, 1]``.
+    :math:`(0, 1]`.
   k_fold : int
     The number of folds in the cross validation: :math:`k`.
   health_check_input : bool
@@ -1024,7 +1024,7 @@ def ztest_stacked_train_load_blockwise(
     variables.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
-    ``(0, 1]``.
+    :math:`(0, 1]`.
   clf : sklearn-like regression object
     An object that has a `fit` and `predict` routine to make predictions.
   callback :
@@ -1229,7 +1229,7 @@ def ztest_stacked_mlrate_train(
     Covariates/features for the control group.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
-    ``(0, 1]``.
+    :math:`(0, 1]`.
   k_fold : int
     The number of folds in the cross validation: :math:`k`.
   health_check_input : bool
