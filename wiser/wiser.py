@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # TODO
-# re-write doc str at top
 # order the funcs for what we want to see in docs
 # can elim types for output
 # Make _ddof -> ddof
@@ -284,34 +283,34 @@ def ztest_from_stats(
   *,
   alpha: float = ALPHA,
 ) -> TestResult:
-  """Version of :func:`ztest` that works off the sufficient statistics of the data.
+  r"""Version of :func:`ztest` that works off the sufficient statistics of the data.
 
   Parameters
   ----------
   mean1 : float
-    The sample mean of the treatment group outcome `x`.
+    The sample mean of the treatment group outcome :math:`x`.
   std1 : float
     The sample standard deviation of the treatment group outcome.
   nobs1 : int
     The number of samples in the treatment group.
   mean2 : float
-    The sample mean of the control group outcome `y`.
+    The sample mean of the control group outcome :math:`y`.
   std2 : float
     The sample standard deviation of the control group outcome.
   nobs2 : int
     The number of samples in the control group.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
-    ``(0, 1]``.
+    :math:`(0, 1]`.
 
   Returns
   -------
-  estimate : float
-    Estimate of the difference in means: ``E[x] - E[y]``.
-  ci : (float, float)
+  estimate :
+    Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
+  ci :
     Confidence interval (with coverage `alpha`) for the estimate.
-  pval : float
-    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
+  pval :
+    The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
   _validate_moments_1(mean1, std1, nobs1)
   _validate_moments_1(mean2, std2, nobs2)
@@ -351,12 +350,12 @@ def ztest(
 
   Returns
   -------
-  estimate : float
-    Estimate of the difference in means: ``E[x] - E[y]``.
-  ci : (float, float)
+  estimate :
+    Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
+  ci :
     Confidence interval (with coverage `alpha`) for the estimate.
-  pval : float
-    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
+  pval :
+    The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
   x, y = _validate_data(x, y, dtypes="buif")
   _validate_alpha(alpha)
@@ -436,12 +435,12 @@ def ztest_cv_from_stats(
 
   Returns
   -------
-  estimate : float
-    Estimate of the difference in means: ``E[x] - E[y]``.
-  ci : (float, float)
+  estimate :
+    Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
+  ci :
     Confidence interval (with coverage `alpha`) for the estimate.
-  pval : float
-    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
+  pval :
+    The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
   mean1, cov1, nobs1 = _validate_moments_2(mean1, cov1, nobs1)
   mean2, cov2, nobs2 = _validate_moments_2(mean2, cov2, nobs2)
@@ -489,12 +488,12 @@ def ztest_cv(
 
   Returns
   -------
-  estimate : float
-    Estimate of the difference in means: ``E[x] - E[y]``.
-  ci : (float, float)
+  estimate :
+    Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
+  ci :
     Confidence interval (with coverage `alpha`) for the estimate.
-  pval : float
-    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
+  pval :
+    The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
   x, xp = _validate_data(x, xp, paired=True)
   y, yp = _validate_data(y, yp, paired=True)
@@ -558,12 +557,12 @@ def ztest_cv_train(
 
   Returns
   -------
-  estimate : float
-    Estimate of the difference in means: ``E[x] - E[y]``.
-  ci : (float, float)
+  estimate :
+    Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
+  ci :
     Confidence interval (with coverage `alpha`) for the estimate.
-  pval : float
-    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
+  pval :
+    The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
   (x, x_covariates, y, y_covariates), (n_x, n_y, _) = _validate_train_data(
     x, x_covariates, y, y_covariates
@@ -651,12 +650,12 @@ def ztest_in_sample_train(
 
   Returns
   -------
-  estimate : float
-    Estimate of the difference in means: ``E[x] - E[y]``.
-  ci : (float, float)
+  estimate :
+    Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
+  ci :
     Confidence interval (with coverage `alpha`) for the estimate.
-  pval : float
-    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
+  pval :
+    The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
   (x, x_covariates, y, y_covariates), (n_x, n_y, _) = _validate_train_data(
     x, x_covariates, y, y_covariates
@@ -754,12 +753,12 @@ def ztest_stacked_from_stats(
 
   Returns
   -------
-  estimate : float
-    Estimate of the difference in means: ``E[x] - E[y]``.
-  ci : (float, float)
+  estimate :
+    Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
+  ci :
     Confidence interval (with coverage `alpha`) for the estimate.
-  pval : float
-    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
+  pval :
+    The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
   # _pool_moments will validate the moments
   _validate_alpha(alpha)
@@ -811,12 +810,12 @@ def ztest_stacked(
 
   Returns
   -------
-  estimate : float
-    Estimate of the difference in means: ``E[x] - E[y]``.
-  ci : (float, float)
+  estimate :
+    Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
+  ci :
     Confidence interval (with coverage `alpha`) for the estimate.
-  pval : float
-    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
+  pval :
+    The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
   x, xp = _validate_data(x, xp, paired=True)
   y, yp = _validate_data(y, yp, paired=True)
@@ -875,12 +874,12 @@ def ztest_stacked_train(
 
   Returns
   -------
-  estimate : float
-    Estimate of the difference in means: ``E[x] - E[y]``.
-  ci : (float, float)
+  estimate :
+    Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
+  ci :
     Confidence interval (with coverage `alpha`) for the estimate.
-  pval : float
-    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
+  pval :
+    The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
   (x, x_covariates, y, y_covariates), (n_x, n_y, _) = _validate_train_data(
     x, x_covariates, y, y_covariates, k_fold=k_fold
@@ -960,12 +959,12 @@ def ztest_stacked_train_blockwise(
 
   Returns
   -------
-  estimate : float
-    Estimate of the difference in means: ``E[x] - E[y]``.
-  ci : (float, float)
+  estimate :
+    Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
+  ci :
     Confidence interval (with coverage `alpha`) for the estimate.
-  pval : float
-    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
+  pval :
+    The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
   (x, x_covariates, y, y_covariates), (n_x, n_y, _) = _validate_train_data(
     x, x_covariates, y, y_covariates, k_fold=k_fold
@@ -1035,11 +1034,11 @@ def ztest_stacked_train_load_blockwise(
   Returns
   -------
   estimate :
-    Estimate of the difference in means: ``E[x] - E[y]``.
+    Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
   ci :
     Confidence interval (with coverage `alpha`) for the estimate.
   pval :
-    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
+    The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
   k_fold = len(data_iter)
   assert k_fold >= MIN_FOLD
@@ -1248,12 +1247,12 @@ def ztest_stacked_mlrate_train(
 
   Returns
   -------
-  estimate : float
-    Estimate of the difference in means: ``E[x] - E[y]``.
-  ci : (float, float)
+  estimate :
+    Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
+  ci :
     Confidence interval (with coverage `alpha`) for the estimate.
-  pval : float
-    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
+  pval :
+    The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
 
   References
   ----------
