@@ -4,7 +4,6 @@
 # TODO
 # re-write doc str at top
 # order the funcs for what we want to see in docs
-# intersphinx for all args
 # can elim types for output
 # Make _ddof -> ddof
 # review func names
@@ -1009,14 +1008,14 @@ def ztest_stacked_train_load_blockwise(
   alpha: float = ALPHA,
   clf: Model = None,
   callback: Optional[Callable[[Model], None]] = None,
-):
+) -> TestResult:
   """Version of :func:`ztest_stacked_train_blockwise` that loads the data in blocks to avoid
   overflowing memory. Using :func:`ztest_stacked_train_blockwise` is faster if all the data fits in
   memory.
 
   Parameters
   ----------
-  data_iter : iterable[callable]
+  data_iter : Sequence[Callable[[], Tuple[:class:`numpy:numpy.ndarray`, :class:`numpy:numpy.ndarray`, :class:`numpy:numpy.ndarray`, :class:`numpy:numpy.ndarray`]]
     An iterable of functions, where each function returns a different cross validation fold. The
     functions should return data in the format of a tuple: ``(x, x_covariates, y, y_covariates)``.
     See the parameters of :func:`ztest_stacked_train_blockwise` for details on the shapes of these
@@ -1026,17 +1025,17 @@ def ztest_stacked_train_load_blockwise(
     ``(0, 1]``.
   clf : sklearn-like regression object
     An object that has a `fit` and `predict` routine to make predictions.
-  callback : callable
+  callback :
     An optional callback that gets called for each cross validation fold in the format
     ``callback(clf)``. This is sometimes useful for logging.
 
   Returns
   -------
-  estimate : float
+  estimate :
     Estimate of the difference in means: ``E[x] - E[y]``.
-  ci : (float, float)
+  ci :
     Confidence interval (with coverage `alpha`) for the estimate.
-  pval : float
+  pval :
     The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
   """
   k_fold = len(data_iter)
