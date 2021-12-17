@@ -46,6 +46,7 @@ extensions = [
   "sphinx.ext.viewcode",
   "sphinx.ext.intersphinx",
   "sphinx.ext.napoleon",
+  "sphinx_autodoc_typehints",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -115,6 +116,7 @@ pygments_style = "sphinx"
 intersphinx_mapping = {
   "python": ("https://docs.python.org/3/", None),
   "numpy": ("https://docs.scipy.org/doc/numpy-1.16.1/", None),
+  "scipy": ("https://docs.scipy.org/doc/scipy/", None),
   "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
   "xarray": ("http://xarray.pydata.org/en/stable/", None),
   "sklearn": ("https://scikit-learn.org/stable/", None),

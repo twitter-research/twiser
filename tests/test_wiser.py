@@ -99,7 +99,7 @@ def general_float_test(test_f, *args, **kwargs):
 
 @given(data_vectors, data_vectors, alphas, ddofs)
 def test_ztest_from_stats(x, y, alpha, ddof):
-  estimate, (lb, ub), pval = wiser.ztest(x, y, alpha=alpha, _ddof=ddof)
+  estimate, (lb, ub), pval = wiser.ztest(x, y, alpha=alpha, ddof=ddof)
   estimate_, (lb_, ub_), pval_ = wiser.ztest_from_stats(
     np.mean(x), np.std(x, ddof=ddof), len(x), np.mean(y), np.std(y, ddof=ddof), len(y), alpha=alpha
   )
@@ -112,12 +112,12 @@ def test_ztest_from_stats(x, y, alpha, ddof):
 
 @given(data_vectors, data_vectors, alphas, ddofs)
 def test_ztest_coherence(x, y, alpha, ddof):
-  general_hyp_tester(wiser.ztest, alpha, x, y, _ddof=ddof)
+  general_hyp_tester(wiser.ztest, alpha, x, y, ddof=ddof)
 
 
 @given(data_vectors_int, data_vectors_int, alphas, ddofs)
 def test_ztest_dtypes(x, y, alpha, ddof):
-  general_float_test(wiser.ztest, x, y, alpha=alpha, _ddof=ddof)
+  general_float_test(wiser.ztest, x, y, alpha=alpha, ddof=ddof)
 
 
 @given(data_vector_pairs_2, ddofs)
@@ -165,7 +165,7 @@ def test_ztest_cv_from_stats(xx, yy, alpha, ddof):
 
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate, (lb, ub), pval = wiser.ztest_cv(x, xp, y, yp, alpha=alpha, _ddof=ddof)
+    estimate, (lb, ub), pval = wiser.ztest_cv(x, xp, y, yp, alpha=alpha, ddof=ddof)
 
   mean1 = np.mean(xx, axis=1)
   cov1 = np.cov(xx, ddof=ddof)
@@ -188,7 +188,7 @@ def test_ztest_cv_coherence(x, y, alpha, ddof):
 
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    general_hyp_tester(wiser.ztest_cv, alpha, x, xp, y, yp, _ddof=ddof)
+    general_hyp_tester(wiser.ztest_cv, alpha, x, xp, y, yp, ddof=ddof)
 
 
 @given(data_vector_pairs_2_int, data_vector_pairs_2_int, alphas, ddofs)
@@ -198,7 +198,7 @@ def test_ztest_cv_dtypes(x, y, alpha, ddof):
 
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    general_float_test(wiser.ztest_cv, x, xp, y, yp, alpha=alpha, _ddof=ddof)
+    general_float_test(wiser.ztest_cv, x, xp, y, yp, alpha=alpha, ddof=ddof)
 
 
 @given(data_vector_pairs_4, data_vector_pairs_4, alphas, seeds, train_fracs, ddofs)
@@ -213,14 +213,14 @@ def test_ztest_cv_train(xx, yy, alpha, seed, train_frac, ddof):
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
     estimate, (lb, ub), pval = wiser.ztest_cv(
-      x[~train_idx_x], xp[~train_idx_x], y[~train_idx_y], yp[~train_idx_y], alpha=alpha, _ddof=ddof
+      x[~train_idx_x], xp[~train_idx_x], y[~train_idx_y], yp[~train_idx_y], alpha=alpha, ddof=ddof
     )
 
   random = np.random.RandomState(seed)
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
     estimate_, (lb_, ub_), pval_ = wiser.ztest_cv_train(
-      x, xp[:, None], y, yp[:, None], alpha=alpha, train_frac=train_frac, random=random, _ddof=ddof
+      x, xp[:, None], y, yp[:, None], alpha=alpha, train_frac=train_frac, random=random, ddof=ddof
     )
 
   assert np.isclose(estimate, estimate_)

@@ -1,6 +1,6 @@
-*****************
-The WISER Package
-*****************
+***************
+Getting Started
+***************
 
 Advanced variance reduction methods.
 
@@ -15,7 +15,7 @@ The package is installed with:
 
    pip install wiser
 
-See the `GitHub <https://github.com/twitter/wiser>`_, `PyPI <https://pypi.org/project/wiser/>`_, and `Read the Docs <https://wiser.readthedocs.io/en/latest/>`_.
+See `GitHub <https://github.com/twitter/wiser>`_, `PyPI <https://pypi.org/project/wiser/>`_, and `Read the Docs <https://wiser.readthedocs.io/en/latest/>`_.
 
 Example Usage
 =============
@@ -26,8 +26,6 @@ Support
 =======
 
 Create a `new issue <https://github.com/twitter-research/wiser/issues/new/choose>`_ or `join a discussion <https://github.com/twitter-research/wiser/discussions>`_.
-
-.. include:: ../CONTRIBUTING.rst
 
 Links
 =====

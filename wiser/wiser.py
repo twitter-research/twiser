@@ -1,33 +1,51 @@
 # Copyright 2021 Twitter, Inc.
 # SPDX-License-Identifier: Apache-2.0
 
-"""The basic layout of the package is as follows:
+# TODO
+# clf -> predictor?
+# review func names
+# order the funcs for what we want to see in docs
 
-   - The API is inspired by `scipy.stats`: `ttest_ind` and `ttest_ind_from_stats`, but does not
-     match exactly
-   - Each kind of test has 3 ways to call it:
-      - from stats: for calling using sufficient statistics of data only
-      - basic: call using the data and the control variate prediction
-      - train: also train and evaluate the predictor in the routine
-          - for lack of a better choice, I assume the model has a sklearn-style `fit()` and
-            `predict()` API
-   - Each function returns: a best estimate, a confidence interval, and p-value
-      - The p-value and confidence interval should be consistent with each other
-   - There are four kinds of tests here:
-      - basic z-test: from the textbooks
-      - cv: for control variate
-      - stacked: for k-fold cross validation type setup
-      - See the blog for the distinctions. In general, the train version calls -> the basic version
-        calls -> from stats version.
+"""The goal of this package is to make hypothesis testing using variance reduction methods as easy
+as using :func:`scipy.stats.ttest_ind` and :func:`scipy.stats.ttest_ind_from_stats`. A lot of the
+API is designed to match that simplicity as much as possible.
 
-Later:
-   - An option to supply a out-of-experiment group for training the predictor
-   - A streaming stats version to be more compatible with DDG: E.g. E[X], E[X^2] instead of E[X] and
-     Var[X].
-   - Support weighted samples, better for a bootstrap analysis
-   - Make the routines need to be broadcast friendly
+The package currently supports four kinds of tests:
 
-http://www.degeneratestate.org/posts/2018/Jan/04/reducing-the-variance-of-ab-test-using-prior-information/
+* basic :math:`z`-test: This is the one from the intro stats textbooks.
+* cv: This is a held out control variate method (train the predictor on a held out set).
+* stacked: This is a :math:`k`-fold cross validation type setup when training the predictor.
+* mlrate: This is the MLRATE method.
+
+The distinction between basic, cv, and stacked is discussed in [1]_. While the MLRATE method comes
+from [2]_.
+
+Each method has a few different ways to call it:
+
+* basic: Call the method using the raw data and the control variate predictions.
+* from stats: Call the method using sufficient statistics of the data and predictions only.
+* train: Pass in a predictor object to train and evaluate the predictor in the routine.
+
+  * For lack of a better choice, I assume the model has a sklearn-style `fit()` and `predict()` API.
+
+Every statistical test in this package returns the same set of variables:
+
+* A best estimate (of the difference of means)
+* A confidence interval (on the difference of means)
+* A p-value under the H0 that the two means are equal
+
+  * The p-value and confidence interval are tested to be consistent with each under inversion.
+
+References
+----------
+.. [1] `I. Barr. Reducing the variance of A/B tests using prior information. Degenerate State, Jun
+   2018
+   <https://www.degeneratestate.org/posts/2018/Jan/04/reducing-the-variance-of-ab-test-using-prior-information/>`_.
+
+.. [2] `Y. Guo, D. Coey, M. Konutgan, W. Li, C. Schoener, and M. Goldman. Machine learning for
+   variance reduction in online experiments. In The 7th Annual Conference on Digital Experimentation
+   @ MIT, 2020
+   <https://arxiv.org/abs/2106.07263>`_.
 """
 import warnings
 from copy import deepcopy
@@ -39,7 +57,6 @@ import scipy.stats as ss
 from sklearn.base import clone
 from sklearn.linear_model import LinearRegression, LogisticRegression
 
-# TODO make 0.05?? Technically this is coverage not alpha.
 # Defaults
 ALPHA = 0.95
 K_FOLD = 5
@@ -54,10 +71,10 @@ TestResult = Tuple[float, Tuple[float, float], float]
 DataGen = Callable[[], Tuple[npt.ArrayLike, npt.ArrayLike, npt.ArrayLike, npt.ArrayLike]]
 # Some placeholders that we can later make more restrictive
 Model = Any
-Rng = Any
+Rng = Optional[np.random.RandomState]
 
 # Access default numpy rng in way that is short and sphinx friendly
-random = np.random.random.__self__
+np_random = np.random.random.__self__
 
 
 class PassThruPred(object):
@@ -76,11 +93,11 @@ class PassThruPred(object):
 
 
 class Cuped(object):
-  def __init__(self, _ddof: int = 1):
+  def __init__(self, ddof: int = 1):
     self.mean_x = None
     self.mean_y = None
     self.theta = None
-    self.ddof = _ddof
+    self.ddof = ddof
 
   def fit(self, x: npt.ArrayLike, y: npt.ArrayLike) -> None:
     n, = np.shape(y)
@@ -118,6 +135,12 @@ def _validate_alpha(alpha: float) -> None:
   assert np.shape(alpha) == ()
   assert 0.0 < alpha
   assert alpha <= 1.0
+
+
+def _validate_ddof(ddof: int) -> None:
+  # Only scalars coming in, so no need to pass back an np version
+  assert np.shape(ddof) == ()
+  assert ddof >= 0
 
 
 def _validate_moments_1(mean: float, std: float, n: int) -> None:
@@ -215,9 +238,9 @@ def _health_check_features(
   n = min(len(x), len(y))
 
   if len(x) < n:
-    x = x[subset_idx(n, len(x), random=random), :]
+    x = x[_subset_idx(n, len(x), random=random), :]
   if len(y) < n:
-    y = y[subset_idx(n, len(y), random=random), :]
+    y = y[_subset_idx(n, len(y), random=random), :]
   assert len(x) == n
   assert len(y) == n
 
@@ -269,34 +292,34 @@ def ztest_from_stats(
   *,
   alpha: float = ALPHA,
 ) -> TestResult:
-  """Version of `ztest` that works off the sufficient statistics of the data.
+  r"""Version of :func:`ztest` that works off the sufficient statistics of the data.
 
   Parameters
   ----------
   mean1 : float
-    The sample mean of the treatment group outcome `x`.
+    The sample mean of the treatment group outcome :math:`x`.
   std1 : float
     The sample standard deviation of the treatment group outcome.
   nobs1 : int
     The number of samples in the treatment group.
   mean2 : float
-    The sample mean of the control group outcome `y`.
+    The sample mean of the control group outcome :math:`y`.
   std2 : float
     The sample standard deviation of the control group outcome.
   nobs2 : int
     The number of samples in the control group.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
-    ``(0, 1]``.
+    :math:`(0, 1]`.
 
   Returns
   -------
-  estimate : float
-    Estimate of the difference in means: ``E[x] - E[y]``.
-  ci : (float, float)
+  estimate :
+    Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
+  ci :
     Confidence interval (with coverage `alpha`) for the estimate.
-  pval : float
-    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
+  pval :
+    The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
   _validate_moments_1(mean1, std1, nobs1)
   _validate_moments_1(mean2, std2, nobs2)
@@ -318,41 +341,37 @@ def ztest_from_stats(
   return estimate, (lb, ub), pval
 
 
-def ztest(
-  x: npt.ArrayLike, y: npt.ArrayLike, *, alpha: float = ALPHA, _ddof: int = 1
-) -> TestResult:
-  """Standard two-sample unpaired z-test. It does not assume equal sample sizes or variances.
+def ztest(x: npt.ArrayLike, y: npt.ArrayLike, *, alpha: float = ALPHA, ddof: int = 1) -> TestResult:
+  r"""Standard two-sample unpaired :math:`z`-test. It does not assume equal sample sizes or
+  variances.
 
   Parameters
   ----------
-  x : ndarray of shape (n,)
+  x : :class:`numpy:numpy.ndarray` of shape of shape (n,)
     Outcomes for the treatment group.
-  y : ndarray of shape (m,)
+  y : :class:`numpy:numpy.ndarray` of shape (m,)
     Outcomes for the control group.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
-    ``(0, 1]``.
+    :math:`(0, 1]`.
+  ddof : int
+    The "Delta Degrees of Freedom" argument for computing sample variances.
 
   Returns
   -------
-  estimate : float
-    Estimate of the difference in means: ``E[x] - E[y]``.
-  ci : (float, float)
+  estimate :
+    Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
+  ci :
     Confidence interval (with coverage `alpha`) for the estimate.
-  pval : float
-    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
+  pval :
+    The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
   x, y = _validate_data(x, y, dtypes="buif")
   _validate_alpha(alpha)
+  _validate_ddof(ddof)
 
   R = ztest_from_stats(
-    np.mean(x),
-    np.std(x, ddof=_ddof),
-    len(x),
-    np.mean(y),
-    np.std(y, ddof=_ddof),
-    len(y),
-    alpha=alpha,
+    np.mean(x), np.std(x, ddof=ddof), len(x), np.mean(y), np.std(y, ddof=ddof), len(y), alpha=alpha
   )
   return R
 
@@ -366,14 +385,14 @@ def _delta_moments(mean: np.ndarray, cov: np.ndarray) -> Tuple[float, float]:
   return delta_mean, delta_std
 
 
-def subset_idx(m: int, n: int, random: Rng = random) -> np.ndarray:
+def _subset_idx(m: int, n: int, random: Rng = np_random) -> np.ndarray:
   idx = np.zeros(n, dtype=bool)
   idx[:m] = True
   random.shuffle(idx)
   return idx
 
 
-def _make_train_idx(frac: float, n: int, random: Rng = random) -> np.ndarray:
+def _make_train_idx(frac: float, n: int, random: Rng = np_random) -> np.ndarray:
   # There are functions in sklearn we could use to avoid needing to implement this, but we are
   # trying to avoid needing sklearn as a dep outside of the unit tests.
   assert n >= 2 * MIN_SPLIT
@@ -381,7 +400,7 @@ def _make_train_idx(frac: float, n: int, random: Rng = random) -> np.ndarray:
   n_train = int(np.ceil(np.clip(frac * n, MIN_SPLIT, n - MIN_SPLIT)).item())
   assert n_train >= MIN_SPLIT
   assert n_train <= n - MIN_SPLIT
-  train_idx = subset_idx(n_train, n, random=random)
+  train_idx = _subset_idx(n_train, n, random=random)
   assert np.sum(train_idx) >= MIN_SPLIT
   assert np.sum(~train_idx) >= MIN_SPLIT
   return train_idx
@@ -397,35 +416,35 @@ def ztest_cv_from_stats(
   *,
   alpha: float = ALPHA,
 ) -> TestResult:
-  """Version of `ztest_cv` that works off the sufficient statistics of the data.
+  r"""Version of :func:`ztest_cv` that works off the sufficient statistics of the data.
 
   Parameters
   ----------
-  mean1 : ndarray of shape (2,)
+  mean1 : :class:`numpy:numpy.ndarray` of shape (2,)
     The sample mean of the treatment group outcome and its prediction: ``[mean(x), mean(xp)]``.
-  cov1 : ndarray of shape (2, 2)
+  cov1 : :class:`numpy:numpy.ndarray` of shape (2, 2)
     The sample covariance matrix of the treatment group outcome and its prediction:
     ``cov([x, xp])``.
   nobs1 : int
     The number of samples in the treatment group.
-  mean2 : ndarray of shape (2,)
+  mean2 : :class:`numpy:numpy.ndarray` of shape (2,)
     The sample mean of the control group outcome and its prediction: ``[mean(y), mean(yp)]``.
-  cov2 : ndarray of shape (2, 2)
+  cov2 : :class:`numpy:numpy.ndarray` of shape (2, 2)
     The sample covariance matrix of the control group outcome and its prediction: ``cov([y, yp])``.
   nobs2 : int
     The number of samples in the control group.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
-    ``(0, 1]``.
+    :math:`(0, 1]`.
 
   Returns
   -------
-  estimate : float
-    Estimate of the difference in means: ``E[x] - E[y]``.
-  ci : (float, float)
+  estimate :
+    Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
+  ci :
     Confidence interval (with coverage `alpha`) for the estimate.
-  pval : float
-    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
+  pval :
+    The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
   mean1, cov1, nobs1 = _validate_moments_2(mean1, cov1, nobs1)
   mean2, cov2, nobs2 = _validate_moments_2(mean2, cov2, nobs2)
@@ -445,10 +464,10 @@ def ztest_cv(
   *,
   alpha: float = ALPHA,
   health_check_output: bool = True,
-  _ddof: int = 1,
+  ddof: int = 1,
 ) -> TestResult:
-  """Two-sample unpaired z-test with variance reduction using control variarates (CV). It does not
-  assume equal sample sizes or variances.
+  r"""Two-sample unpaired :math:`z`-test with variance reduction using control variarates (CV). It
+  does not assume equal sample sizes or variances.
 
   The predictions (control variates) must be derived from features that are independent of
   assignment to treatment or control. If the predictions in treatment and control have a different
@@ -456,38 +475,41 @@ def ztest_cv(
 
   Parameters
   ----------
-  x : ndarray of shape (n,)
+  x : :class:`numpy:numpy.ndarray` of shape (n,)
     Outcomes for the treatment group.
-  xp : ndarray of shape (n,)
+  xp : :class:`numpy:numpy.ndarray` of shape (n,)
     Predicted outcomes for the treatment group.
-  y : ndarray of shape (m,)
+  y : :class:`numpy:numpy.ndarray` of shape (m,)
     Outcomes for the control group.
-  yp : ndarray of shape (m,)
+  yp : :class:`numpy:numpy.ndarray` of shape (m,)
     Predicted outcomes for the control group.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
-    ``(0, 1]``.
+    :math:`(0, 1]`.
   health_check_output : bool
     If ``True`` perform a health check that ensures the predictions have the same distribution in
     treatment and control. If not, issue a warning.
+  ddof : int
+    The "Delta Degrees of Freedom" argument for computing sample variances.
 
   Returns
   -------
-  estimate : float
-    Estimate of the difference in means: ``E[x] - E[y]``.
-  ci : (float, float)
+  estimate :
+    Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
+  ci :
     Confidence interval (with coverage `alpha`) for the estimate.
-  pval : float
-    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
+  pval :
+    The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
   x, xp = _validate_data(x, xp, paired=True)
   y, yp = _validate_data(y, yp, paired=True)
   _validate_alpha(alpha)
+  _validate_ddof(ddof)
 
   if health_check_output:
     _health_check_output(xp, yp)
 
-  R = ztest(x - xp, y - yp, alpha=alpha, _ddof=_ddof)
+  R = ztest(x - xp, y - yp, alpha=alpha, ddof=ddof)
   return R
 
 
@@ -502,27 +524,27 @@ def ztest_cv_train(
   health_check_input: bool = False,
   health_check_output: bool = True,
   clf: Model = None,
-  random: Rng = random,
-  _ddof: int = 1,
+  random: Rng = None,
+  ddof: int = 1,
 ) -> TestResult:
-  """Version of `ztest_cv` that also trains the control variate predictor.
+  r"""Version of :func:`ztest_cv` that also trains the control variate predictor.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
-  in treatment and control have a different distributions then the test may be invalid.
+  in treatment and control have a different distribution then the test may be invalid.
 
   Parameters
   ----------
-  x : ndarray of shape (n,)
+  x : :class:`numpy:numpy.ndarray` of shape (n,)
     Outcomes for the treatment group.
-  x_covariates : ndarray of shape (n, d)
+  x_covariates : :class:`numpy:numpy.ndarray` of shape (n, d)
     Covariates/features for the treatment group.
-  y : ndarray of shape (m,)
+  y : :class:`numpy:numpy.ndarray` of shape (m,)
     Outcomes for the control group.
-  y_covariates : ndarray of shape (m, d)
+  y_covariates : :class:`numpy:numpy.ndarray` of shape (m, d)
     Covariates/features for the control group.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
-    ``(0, 1]``.
+    :math:`(0, 1]`.
   train_frac : float
     The fraction of data to hold out for training the predictors. To ensure test validity, we do not
     use the same data for training the predictors and performing the test. This must be inside the
@@ -537,17 +559,19 @@ def ztest_cv_train(
     treatment and control. If not, issue a warning.
   clf : sklearn-like regression object
     An object that has a `fit` and `predict` routine to make predictions.
-  random : RandomState
+  random : :class:`numpy:numpy.random.RandomState`
     An optional numpy random stream can be passed in for reproducibility.
+  ddof : int
+    The "Delta Degrees of Freedom" argument for computing sample variances.
 
   Returns
   -------
-  estimate : float
-    Estimate of the difference in means: ``E[x] - E[y]``.
-  ci : (float, float)
+  estimate :
+    Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
+  ci :
     Confidence interval (with coverage `alpha`) for the estimate.
-  pval : float
-    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
+  pval :
+    The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
   (x, x_covariates, y, y_covariates), (n_x, n_y, _) = _validate_train_data(
     x, x_covariates, y, y_covariates
@@ -555,9 +579,13 @@ def ztest_cv_train(
   _validate_alpha(alpha)
   assert 0.0 <= train_frac
   assert train_frac <= 1.0
+  _validate_ddof(ddof)
 
   if clf is None:
     clf = PassThruPred()
+
+  if random is None:
+    random = np_random
 
   if health_check_input:
     _health_check_features(x_covariates, y_covariates)
@@ -583,7 +611,7 @@ def ztest_cv_train(
     y[~train_idx_y],
     yp,
     alpha=alpha,
-    _ddof=_ddof,
+    ddof=ddof,
     health_check_output=health_check_output,
   )
   return R
@@ -599,27 +627,27 @@ def ztest_in_sample_train(
   health_check_input: bool = False,
   health_check_output: bool = False,
   clf: Model = None,
-  random: Rng = random,
-  _ddof: int = 1,
+  random: Rng = None,
+  ddof: int = 1,
 ) -> TestResult:
-  """Version of `ztest_cv` that also trains the control variate predictor.
+  r"""Version of :func:`ztest_cv` that also trains the control variate predictor.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
-  in treatment and control have a different distributions then the test may be invalid.
+  in treatment and control have a different distribution then the test may be invalid.
 
   Parameters
   ----------
-  x : ndarray of shape (n,)
+  x : :class:`numpy:numpy.ndarray` of shape (n,)
     Outcomes for the treatment group.
-  x_covariates : ndarray of shape (n, d)
+  x_covariates : :class:`numpy:numpy.ndarray` of shape (n, d)
     Covariates/features for the treatment group.
-  y : ndarray of shape (m,)
+  y : :class:`numpy:numpy.ndarray` of shape (m,)
     Outcomes for the control group.
-  y_covariates : ndarray of shape (m, d)
+  y_covariates : :class:`numpy:numpy.ndarray` of shape (m, d)
     Covariates/features for the control group.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
-    ``(0, 1]``.
+    :math:`(0, 1]`.
   health_check_input : bool
     If ``True`` perform a health check that ensures the features have the same distribution in
     treatment and control. If not, issue a warning. It works by training a classifier to predict if
@@ -630,25 +658,31 @@ def ztest_in_sample_train(
     treatment and control. If not, issue a warning.
   clf : sklearn-like regression object
     An object that has a `fit` and `predict` routine to make predictions.
-  random : RandomState
+  random : :class:`numpy:numpy.random.RandomState`
     An optional numpy random stream can be passed in for reproducibility.
+  ddof : int
+    The "Delta Degrees of Freedom" argument for computing sample variances.
 
   Returns
   -------
-  estimate : float
-    Estimate of the difference in means: ``E[x] - E[y]``.
-  ci : (float, float)
+  estimate :
+    Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
+  ci :
     Confidence interval (with coverage `alpha`) for the estimate.
-  pval : float
-    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
+  pval :
+    The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
   (x, x_covariates, y, y_covariates), (n_x, n_y, _) = _validate_train_data(
     x, x_covariates, y, y_covariates
   )
   _validate_alpha(alpha)
+  _validate_ddof(ddof)
 
   if clf is None:
     clf = PassThruPred()
+
+  if random is None:
+    random = np_random
 
   if health_check_input:
     _health_check_features(x_covariates, y_covariates)
@@ -662,7 +696,7 @@ def ztest_in_sample_train(
   yp = clf.predict(y_covariates)
   assert np.all(np.isfinite(yp))
 
-  R = ztest_cv(x, xp, y, yp, alpha=alpha, _ddof=_ddof, health_check_output=health_check_output)
+  R = ztest_cv(x, xp, y, yp, alpha=alpha, ddof=ddof, health_check_output=health_check_output)
   return R
 
 
@@ -690,7 +724,7 @@ def _pool_moments(
   return mean_, cov_, nobs_
 
 
-def _fold_idx(n: int, k: int, random: Rng = random) -> np.ndarray:
+def _fold_idx(n: int, k: int, random: Rng = np_random) -> np.ndarray:
   # There are functions in sklearn we could use to avoid needing to implement this, but we are
   # trying to avoid needing sklearn as a dep outside of the unit tests.
   assert n >= k
@@ -710,38 +744,40 @@ def ztest_stacked_from_stats(
   *,
   alpha: float = ALPHA,
 ) -> TestResult:
-  """Version of `ztest_stacked` that works off the sufficient statistics of the data.
+  r"""Version of :func:`ztest_stacked` that works off the sufficient statistics of the data.
 
   Parameters
   ----------
-  mean1 : ndarray of shape (k, 2)
+  mean1 : :class:`numpy:numpy.ndarray` of shape (k, 2)
     The sample mean of the treatment group outcome and its prediction: ``[mean(x), mean(xp)]``, for
-    each fold in the K-fold cross validation.
-  cov1 : ndarray of shape (k, 2, 2)
+    each fold in the :math:`k`-fold cross validation.
+  cov1 : :class:`numpy:numpy.ndarray` of shape (k, 2, 2)
     The sample covariance matrix of the treatment group outcome and its prediction:
-    ``cov([x, xp])``, for each fold in the K-fold cross validation.
-  nobs1 : ndarray of shape (k,)
-    The number of samples in the treatment group, for each fold in the K-fold cross validation.
-  mean2 : ndarray of shape (k, 2)
+    ``cov([x, xp])``, for each fold in the :math:`k`-fold cross validation.
+  nobs1 : :class:`numpy:numpy.ndarray` of shape (k,)
+    The number of samples in the treatment group, for each fold in the :math:`k`-fold cross
+    validation.
+  mean2 : :class:`numpy:numpy.ndarray` of shape (k, 2)
     The sample mean of the control group outcome and its prediction: ``[mean(y), mean(yp)]``, for
-    each fold in the K-fold cross validation.
-  cov2 : ndarray of shape (k, 2, 2)
+    each fold in the :math:`k`-fold cross validation.
+  cov2 : :class:`numpy:numpy.ndarray` of shape (k, 2, 2)
     The sample covariance matrix of the control group outcome and its prediction: ``cov([y, yp])``,
-    for each fold in the K-fold cross validation.
-  nobs2 : ndarray of shape (k,)
-    The number of samples in the control group, for each fold in the K-fold cross validation.
+    for each fold in the :math:`k`-fold cross validation.
+  nobs2 : :class:`numpy:numpy.ndarray` of shape (k,)
+    The number of samples in the control group, for each fold in the :math:`k`-fold cross
+    validation.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
-    ``(0, 1]``.
+    :math:`(0, 1]`.
 
   Returns
   -------
-  estimate : float
-    Estimate of the difference in means: ``E[x] - E[y]``.
-  ci : (float, float)
+  estimate :
+    Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
+  ci :
     Confidence interval (with coverage `alpha`) for the estimate.
-  pval : float
-    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
+  pval :
+    The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
   # _pool_moments will validate the moments
   _validate_alpha(alpha)
@@ -763,8 +799,8 @@ def ztest_stacked(
   alpha: float = ALPHA,
   health_check_output: bool = True,
 ) -> TestResult:
-  """Two-sample unpaired z-test with variance reduction using the *stacked* control variarates (CV)
-  method. It does not assume equal sample sizes or variances.
+  r"""Two-sample unpaired :math:`z`-test with variance reduction using the *stacked* control
+  variarates (CV) method. It does not assume equal sample sizes or variances.
 
   The predictions (control variates) must be derived from features that are independent of
   assignment to treatment or control. If the predictions in treatment and control have a different
@@ -772,40 +808,40 @@ def ztest_stacked(
 
   Parameters
   ----------
-  x : ndarray of shape (n,)
+  x : :class:`numpy:numpy.ndarray` of shape (n,)
     Outcomes for the treatment group.
-  xp : ndarray of shape (n,)
+  xp : :class:`numpy:numpy.ndarray` of shape (n,)
     Predicted outcomes for the treatment group derived from a cross-validation routine.
-  x_fold : ndarray of shape (n,)
-    The cross validation fold assignment for each data point in treatment, of `dtype` `int`.
-  y : ndarray of shape (m,)
+  x_fold : :class:`numpy:numpy.ndarray` of shape (n,)
+    The cross validation fold assignment for each data point in treatment (of `dtype` `int`).
+  y : :class:`numpy:numpy.ndarray` of shape (m,)
     Outcomes for the control group.
-  yp : ndarray of shape (m,)
+  yp : :class:`numpy:numpy.ndarray` of shape (m,)
     Predicted outcomes for the control group derived from a cross-validation routine.
-  y_fold : ndarray of shape (n,)
-    The cross validation fold assignment for each data point in control, of `dtype` `int`.
+  y_fold : :class:`numpy:numpy.ndarray` of shape (n,)
+    The cross validation fold assignment for each data point in control (of `dtype` `int`).
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
-    ``(0, 1]``.
+    :math:`(0, 1]`.
   health_check_output : bool
     If ``True`` perform a health check that ensures the predictions have the same distribution in
     treatment and control. If not, issue a warning.
 
   Returns
   -------
-  estimate : float
-    Estimate of the difference in means: ``E[x] - E[y]``.
-  ci : (float, float)
+  estimate :
+    Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
+  ci :
     Confidence interval (with coverage `alpha`) for the estimate.
-  pval : float
-    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
+  pval :
+    The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
   x, xp = _validate_data(x, xp, paired=True)
   y, yp = _validate_data(y, yp, paired=True)
   _validate_alpha(alpha)
 
   # Current method ignores fold index => we won't validate for now
-  R = ztest_cv(x, xp, y, yp, alpha=alpha, _ddof=0, health_check_output=health_check_output)
+  R = ztest_cv(x, xp, y, yp, alpha=alpha, ddof=0, health_check_output=health_check_output)
   return R
 
 
@@ -820,28 +856,28 @@ def ztest_stacked_train(
   health_check_input: bool = False,
   health_check_output: bool = True,
   clf: Model = None,
-  random: Rng = random,
+  random: Rng = None,
 ) -> TestResult:
-  """Version of `ztest_stacked` that also trains the control variate predictor.
+  r"""Version of :func:`ztest_stacked` that also trains the control variate predictor.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
-  in treatment and control have a different distributions then the test may be invalid.
+  in treatment and control have a different distribution then the test may be invalid.
 
   Parameters
   ----------
-  x : ndarray of shape (n,)
+  x : :class:`numpy:numpy.ndarray` of shape (n,)
     Outcomes for the treatment group.
-  x_covariates : ndarray of shape (n, d)
+  x_covariates : :class:`numpy:numpy.ndarray` of shape (n, d)
     Covariates/features for the treatment group.
-  y : ndarray of shape (m,)
+  y : :class:`numpy:numpy.ndarray` of shape (m,)
     Outcomes for the control group.
-  y_covariates : ndarray of shape (m, d)
+  y_covariates : :class:`numpy:numpy.ndarray` of shape (m, d)
     Covariates/features for the control group.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
-    ``(0, 1]``.
+    :math:`(0, 1]`.
   k_fold : int
-    The number of folds in the cross validation: `K`.
+    The number of folds in the cross validation: :math:`k`.
   health_check_input : bool
     If ``True`` perform a health check that ensures the features have the same distribution in
     treatment and control. If not, issue a warning. It works by training a classifier to predict if
@@ -852,17 +888,17 @@ def ztest_stacked_train(
     treatment and control. If not, issue a warning.
   clf : sklearn-like regression object
     An object that has a `fit` and `predict` routine to make predictions.
-  random : RandomState
+  random : :class:`numpy:numpy.random.RandomState`
     An optional numpy random stream can be passed in for reproducibility.
 
   Returns
   -------
-  estimate : float
-    Estimate of the difference in means: ``E[x] - E[y]``.
-  ci : (float, float)
+  estimate :
+    Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
+  ci :
     Confidence interval (with coverage `alpha`) for the estimate.
-  pval : float
-    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
+  pval :
+    The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
   (x, x_covariates, y, y_covariates), (n_x, n_y, _) = _validate_train_data(
     x, x_covariates, y, y_covariates, k_fold=k_fold
@@ -871,6 +907,9 @@ def ztest_stacked_train(
 
   if clf is None:
     clf = PassThruPred()
+
+  if random is None:
+    random = np_random
 
   if health_check_input:
     _health_check_features(x_covariates, y_covariates)
@@ -907,26 +946,26 @@ def ztest_stacked_train_blockwise(
   health_check_input: bool = False,
   health_check_output: bool = True,
   clf: Model = None,
-  random: Rng = random,
+  random: Rng = None,
 ) -> TestResult:
-  """Version of `ztest_stacked_train` that is more efficient if the fit routine scales worse than
-  O(N), otherwise this will not be more efficient.
+  r"""Version of :func:`ztest_stacked_train` that is more efficient if the fit routine scales worse
+  than O(N), otherwise this will not be more efficient.
 
   Parameters
   ----------
-  x : ndarray of shape (n,)
+  x : :class:`numpy:numpy.ndarray` of shape (n,)
     Outcomes for the treatment group.
-  x_covariates : ndarray of shape (n, d)
+  x_covariates : :class:`numpy:numpy.ndarray` of shape (n, d)
     Covariates/features for the treatment group.
-  y : ndarray of shape (m,)
+  y : :class:`numpy:numpy.ndarray` of shape (m,)
     Outcomes for the control group.
-  y_covariates : ndarray of shape (m, d)
+  y_covariates : :class:`numpy:numpy.ndarray` of shape (m, d)
     Covariates/features for the control group.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
-    ``(0, 1]``.
+    :math:`(0, 1]`.
   k_fold : int
-    The number of folds in the cross validation: `K`.
+    The number of folds in the cross validation: :math:`k`.
   health_check_input : bool
     If ``True`` perform a health check that ensures the features have the same distribution in
     treatment and control. If not, issue a warning. It works by training a classifier to predict if
@@ -937,17 +976,17 @@ def ztest_stacked_train_blockwise(
     treatment and control. If not, issue a warning.
   clf : sklearn-like regression object
     An object that has a `fit` and `predict` routine to make predictions.
-  random : RandomState
+  random : :class:`numpy:numpy.random.RandomState`
     An optional numpy random stream can be passed in for reproducibility.
 
   Returns
   -------
-  estimate : float
-    Estimate of the difference in means: ``E[x] - E[y]``.
-  ci : (float, float)
+  estimate :
+    Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
+  ci :
     Confidence interval (with coverage `alpha`) for the estimate.
-  pval : float
-    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
+  pval :
+    The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
   (x, x_covariates, y, y_covariates), (n_x, n_y, _) = _validate_train_data(
     x, x_covariates, y, y_covariates, k_fold=k_fold
@@ -956,6 +995,9 @@ def ztest_stacked_train_blockwise(
 
   if clf is None:
     clf = PassThruPred()
+
+  if random is None:
+    random = np_random
 
   if health_check_input:
     _health_check_features(x_covariates, y_covariates)
@@ -993,34 +1035,35 @@ def ztest_stacked_train_load_blockwise(
   alpha: float = ALPHA,
   clf: Model = None,
   callback: Optional[Callable[[Model], None]] = None,
-):
-  """Version of `ztest_stacked_train_blockwise` that loads the data in blocks to avoid overflowing
-  memory. Using `ztest_stacked_train_blockwise` is faster if all the data fits in memory.
+) -> TestResult:
+  r"""Version of :func:`ztest_stacked_train_blockwise` that loads the data in blocks to avoid
+  overflowing memory. Using :func:`ztest_stacked_train_blockwise` is faster if all the data fits in
+  memory.
 
   Parameters
   ----------
-  data_iter : iterable[callable]
+  data_iter : Sequence[Callable[[], Tuple[:class:`numpy:numpy.ndarray`, :class:`numpy:numpy.ndarray`, :class:`numpy:numpy.ndarray`, :class:`numpy:numpy.ndarray`]]
     An iterable of functions, where each function returns a different cross validation fold. The
     functions should return data in the format of a tuple: ``(x, x_covariates, y, y_covariates)``.
-    See the parameters of `ztest_stacked_train_blockwise` for details on the shapes of these
+    See the parameters of :func:`ztest_stacked_train_blockwise` for details on the shapes of these
     variables.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
-    ``(0, 1]``.
+    :math:`(0, 1]`.
   clf : sklearn-like regression object
     An object that has a `fit` and `predict` routine to make predictions.
-  callback : callable
+  callback :
     An optional callback that gets called for each cross validation fold in the format
     ``callback(clf)``. This is sometimes useful for logging.
 
   Returns
   -------
-  estimate : float
-    Estimate of the difference in means: ``E[x] - E[y]``.
-  ci : (float, float)
+  estimate :
+    Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
+  ci :
     Confidence interval (with coverage `alpha`) for the estimate.
-  pval : float
-    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
+  pval :
+    The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
   k_fold = len(data_iter)
   assert k_fold >= MIN_FOLD
@@ -1098,20 +1141,24 @@ def _ztest_stacked_mlrate_train(
   health_check_input: bool = False,
   health_check_output: bool = True,
   clf: Model = None,
-  random: Rng = random,
-  _ddof: int = 1,
+  random: Rng = None,
+  ddof: int = 1,
 ) -> TestResult:
   """See ztest_stacked_mlrate_train."""
   (x, x_covariates, y, y_covariates), (n_x, n_y, _) = _validate_train_data(
     x, x_covariates, y, y_covariates, k_fold=k_fold
   )
   _validate_alpha(alpha)
+  _validate_ddof(ddof)
 
   if health_check_input:
     _health_check_features(x_covariates, y_covariates)
 
   if clf is None:
     clf = PassThruPred()
+
+  if random is None:
+    random = np_random
 
   # Sample the folds
   fold_idx_x = _fold_idx(n_x, k_fold, random=random)
@@ -1155,8 +1202,8 @@ def _ztest_stacked_mlrate_train(
 
   # Get a sample variance based on results of the regression
   fac = (alpha_coef[2] * p_hat + (alpha_coef[2] + alpha_coef[3]) * (1 - p_hat)) ** 2
-  pred_var = np.var(reg_mat[:, 1], ddof=_ddof) / (p_hat * (1 - p_hat))
-  base_var = np.var(y, ddof=_ddof) / (1 - p_hat) + np.var(x, ddof=_ddof) / p_hat
+  pred_var = np.var(reg_mat[:, 1], ddof=ddof) / (p_hat * (1 - p_hat))
+  base_var = np.var(y, ddof=ddof) / (1 - p_hat) + np.var(x, ddof=ddof) / p_hat
   sample_var = base_var - (pred_var * fac)
   assert np.isfinite(sample_var)
   if sample_var <= 0.0:
@@ -1165,7 +1212,7 @@ def _ztest_stacked_mlrate_train(
       "Falling back on a no variance reduction test.",
       UserWarning,
     )
-    estimate, (lb, ub), pval = ztest(x, y, alpha=alpha, _ddof=_ddof)
+    estimate, (lb, ub), pval = ztest(x, y, alpha=alpha, ddof=ddof)
     return estimate, (lb, ub), pval, True
 
   # Extract Gaussian parameters of sampling distribution
@@ -1179,28 +1226,41 @@ def _ztest_stacked_mlrate_train(
   return estimate, (lb, ub), pval, False
 
 
-def ztest_stacked_mlrate_train(*args, **kwargs):
-  """Very similar to `ztest_stacked_train` but uses the method of Guo et. al. to try to account for
+def ztest_stacked_mlrate_train(
+  x: npt.ArrayLike,
+  x_covariates: npt.ArrayLike,
+  y: npt.ArrayLike,
+  y_covariates: npt.ArrayLike,
+  *,
+  alpha: float = ALPHA,
+  k_fold: int = K_FOLD,
+  health_check_input: bool = False,
+  health_check_output: bool = True,
+  clf: Model = None,
+  random: Rng = None,
+  ddof: int = 1,
+):
+  r"""Very similar to :func:`ztest_stacked_train` but uses the method of [2]_ to try to account for
   the correlations between cross validation folds.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
-  in treatment and control have a different distributions then the test may be invalid.
+  in treatment and control have a different distribution then the test may be invalid.
 
   Parameters
   ----------
-  x : ndarray of shape (n,)
+  x : :class:`numpy:numpy.ndarray` of shape (n,)
     Outcomes for the treatment group.
-  x_covariates : ndarray of shape (n, d)
+  x_covariates : :class:`numpy:numpy.ndarray` of shape (n, d)
     Covariates/features for the treatment group.
-  y : ndarray of shape (m,)
+  y : :class:`numpy:numpy.ndarray` of shape (m,)
     Outcomes for the control group.
-  y_covariates : ndarray of shape (m, d)
+  y_covariates : :class:`numpy:numpy.ndarray` of shape (m, d)
     Covariates/features for the control group.
   alpha : float
     Required confidence level, typically this should be 0.95, and must be inside the interval range
-    ``(0, 1]``.
+    :math:`(0, 1]`.
   k_fold : int
-    The number of folds in the cross validation: `K`.
+    The number of folds in the cross validation: :math:`k`.
   health_check_input : bool
     If ``True`` perform a health check that ensures the features have the same distribution in
     treatment and control. If not, issue a warning. It works by training a classifier to predict if
@@ -1211,21 +1271,31 @@ def ztest_stacked_mlrate_train(*args, **kwargs):
     treatment and control. If not, issue a warning.
   clf : sklearn-like regression object
     An object that has a `fit` and `predict` routine to make predictions.
-  random : RandomState
+  random : :class:`numpy:numpy.random.RandomState`
     An optional numpy random stream can be passed in for reproducibility.
+  ddof : int
+    The "Delta Degrees of Freedom" argument for computing sample variances.
 
   Returns
   -------
-  estimate : float
-    Estimate of the difference in means: ``E[x] - E[y]``.
-  ci : (float, float)
+  estimate :
+    Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
+  ci :
     Confidence interval (with coverage `alpha`) for the estimate.
-  pval : float
-    The p-value under the null hypothesis H0 that ``E[x] = E[y]``.
-
-  References
-  ----------
-  https://drive.google.com/file/d/153hxSPJjvVejZS8ot_W8cm6S_YGO0o88/view
+  pval :
+    The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
-  estimate, (lb, ub), pval, _ = _ztest_stacked_mlrate_train(*args, **kwargs)
+  estimate, (lb, ub), pval, _ = _ztest_stacked_mlrate_train(
+    x=x,
+    x_covariates=x_covariates,
+    y=y,
+    y_covariates=y_covariates,
+    alpha=alpha,
+    k_fold=k_fold,
+    health_check_input=health_check_input,
+    health_check_output=health_check_output,
+    clf=clf,
+    random=random,
+    ddof=ddof,
+  )
   return estimate, (lb, ub), pval
