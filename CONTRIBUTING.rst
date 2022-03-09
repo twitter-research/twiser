@@ -23,21 +23,21 @@ Then clone the repo in your git directory ``$GIT``:
 .. code-block:: bash
 
    cd $GIT
-   git clone https://github.com/twitter/wiser.git
+   git clone https://github.com/twitter/twiser.git
 
 Inside your virtual environments folder ``$ENVS``, make the environment:
 
 .. code-block:: bash
 
    cd $ENVS
-   virtualenv wiser --python=python3.7
-   source $ENVS/wiser/bin/activate
+   virtualenv twiser --python=python3.7
+   source $ENVS/twiser/bin/activate
 
 Now we can install the pip dependencies. Move back into your git directory and run
 
 .. code-block:: bash
 
-   cd $GIT/wiser
+   cd $GIT/twiser
    pip install -r requirements/base.txt
    pip install -e .  # Install the package itself
 
@@ -56,21 +56,21 @@ Then clone the repo in your git directory ``$GIT``:
 .. code-block:: bash
 
    cd $GIT
-   git clone https://github.com/twitter/wiser.git
+   git clone https://github.com/twitter/twiser.git
 
 Inside your virtual environments folder ``$ENVS``, make the environment:
 
 .. code-block:: bash
 
    cd $ENVS
-   virtualenv wiser --python=python3.7
-   source $ENVS/wiser/bin/activate
+   virtualenv twiser --python=python3.7
+   source $ENVS/twiser/bin/activate
 
 Now we can install the pip dependencies. Move back into your git directory and run
 
 .. code-block:: bash
 
-   cd $GIT/wiser
+   cd $GIT/twiser
    pip install -r requirements/base.txt
    pip install -e .  # Install the package itself
 
@@ -82,25 +82,25 @@ First, we need to setup some needed tools:
 .. code-block:: bash
 
    cd $ENVS
-   virtualenv wiser_tools --python=python3.7
-   source $ENVS/wiser_tools/bin/activate
-   pip install -r $GIT/wiser/requirements/tools.txt
+   virtualenv twiser_tools --python=python3.7
+   source $ENVS/twiser_tools/bin/activate
+   pip install -r $GIT/twiser/requirements/tools.txt
 
-To install the pre-commit hooks for contributing run (in the ``wiser_tools`` environment):
+To install the pre-commit hooks for contributing run (in the ``twiser_tools`` environment):
 
 .. code-block:: bash
 
-   cd $GIT/wiser
+   cd $GIT/twiser
    pre-commit install
 
 To rebuild the requirements, we can run:
 
 .. code-block:: bash
 
-   cd $GIT/wiser
+   cd $GIT/twiser
 
    # Check if there any discrepancies in the .in files
-   pipreqs wiser/ --diff requirements/base.in
+   pipreqs twiser/ --diff requirements/base.in
    pipreqs tests/ --diff requirements/tests.in
    pipreqs docs/ --diff requirements/docs.in
 
@@ -114,7 +114,7 @@ The wheel (tar ball) for deployment as a pip installable package can be built us
 
 .. code-block:: bash
 
-   cd $GIT/wiser/
+   cd $GIT/twiser/
    ./build_wheel.sh
 
 This script will only run if the git repo is clean, i.e., first run ``git clean -x -ff -d``.
@@ -127,15 +127,15 @@ First setup the environment for building with ``Sphinx``:
 .. code-block:: bash
 
    cd $ENVS
-   virtualenv wiser_docs --python=python3.7
-   source $ENVS/wiser_docs/bin/activate
-   pip install -r $GIT/wiser/requirements/docs.txt
+   virtualenv twiser_docs --python=python3.7
+   source $ENVS/twiser_docs/bin/activate
+   pip install -r $GIT/twiser/requirements/docs.txt
 
 Then we can do the build:
 
 .. code-block:: bash
 
-   cd $GIT/wiser/docs
+   cd $GIT/twiser/docs
    make all
    open _build/html/index.html
 
@@ -158,11 +158,11 @@ The tests for this package can be run with:
 
 .. code-block:: bash
 
-   cd $GIT/wiser
+   cd $GIT/twiser
    ./local_test.sh
 
 The script creates an environment using the requirements found in ``requirements/test.txt``.
-A code coverage report will also be produced in ``$GIT/wiser/htmlcov/index.html``.
+A code coverage report will also be produced in ``$GIT/twiser/htmlcov/index.html``.
 
 Style
 -----

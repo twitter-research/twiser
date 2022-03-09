@@ -18,7 +18,7 @@ python --version
 pip install -r requirements/base.txt
 pip install -r requirements/tests.txt
 pip install -e .[test]
-pytest tests/ -s -v --disable-pytest-warnings --hypothesis-seed=0 --cov=wiser --cov-report html
+pytest tests/ -s -v --disable-pytest-warnings --hypothesis-seed=0 --cov=twiser --cov-report html
 deactivate
 
 # Test using latest

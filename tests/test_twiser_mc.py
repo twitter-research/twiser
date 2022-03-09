@@ -7,7 +7,7 @@ from hypothesis import given, settings
 from hypothesis.strategies import floats, integers
 from hypothesis_gufunc.gufunc import gufunc_args
 from sklearn.linear_model import LinearRegression
-from wiser import wiser
+from twiser import twiser
 
 N_TESTS_OOM = 100  # Order of magnitude on roughly how many tests in file
 
@@ -76,7 +76,7 @@ def test_ztest_null(nobs1, nobs2, std1, std2, mean, alpha, seed):
     x1 = random.randn(nobs1) * std1 + mean
     x2 = random.randn(nobs2) * std2 + mean
 
-    R = wiser.ztest(x1, x2, alpha=alpha)
+    R = twiser.ztest(x1, x2, alpha=alpha)
     results_list.append(R)
 
   pval = gen_validate(results_list, true_value=0.0, alpha=alpha)
@@ -102,7 +102,7 @@ def test_ztest_alt(nobs1, nobs2, std1, std2, mean1, mean2, alpha, seed):
     x1 = random.randn(nobs1) * std1 + mean1
     x2 = random.randn(nobs2) * std2 + mean2
 
-    R = wiser.ztest(x1, x2, alpha=alpha)
+    R = twiser.ztest(x1, x2, alpha=alpha)
     results_list.append(R)
 
   pval = gen_validate(results_list, true_value=true_value, alpha=alpha, test_null=False)
@@ -124,7 +124,7 @@ def test_ztest_from_stats_null(nobs1, nobs2, std1, std2, mean, alpha, seed):
     x1 = random.randn(nobs1) * std1 + mean
     x2 = random.randn(nobs2) * std2 + mean
 
-    R = wiser.ztest_from_stats(np.mean(x1), std1, nobs1, np.mean(x2), std2, nobs2, alpha=alpha)
+    R = twiser.ztest_from_stats(np.mean(x1), std1, nobs1, np.mean(x2), std2, nobs2, alpha=alpha)
     results_list.append(R)
 
   pval = gen_validate(results_list, true_value=0.0, alpha=alpha)
@@ -150,7 +150,7 @@ def test_ztest_from_stats_alt(nobs1, nobs2, std1, std2, mean1, mean2, alpha, see
     x1 = random.randn(nobs1) * std1 + mean1
     x2 = random.randn(nobs2) * std2 + mean2
 
-    R = wiser.ztest_from_stats(np.mean(x1), std1, nobs1, np.mean(x2), std2, nobs2, alpha=alpha)
+    R = twiser.ztest_from_stats(np.mean(x1), std1, nobs1, np.mean(x2), std2, nobs2, alpha=alpha)
     results_list.append(R)
 
   pval = gen_validate(results_list, true_value=true_value, alpha=alpha, test_null=False)
@@ -203,7 +203,7 @@ def test_ztest_cv_null(
 
     x, xp = x1[:, 0], x1[:, 1]
     y, yp = x2[:, 0], x2[:, 1]
-    R = wiser.ztest_cv(x, xp, y, yp, alpha=alpha)
+    R = twiser.ztest_cv(x, xp, y, yp, alpha=alpha)
     results_list.append(R)
 
   pval = gen_validate(results_list, true_value=0.0, alpha=alpha)
@@ -260,7 +260,7 @@ def test_ztest_cv_alt(
 
     x, xp = x1[:, 0], x1[:, 1]
     y, yp = x2[:, 0], x2[:, 1]
-    R = wiser.ztest_cv(x, xp, y, yp, alpha=alpha)
+    R = twiser.ztest_cv(x, xp, y, yp, alpha=alpha)
     results_list.append(R)
 
   pval = gen_validate(results_list, true_value=true_value, alpha=alpha, test_null=False)
@@ -311,7 +311,7 @@ def test_ztest_cv_from_stats_null(
     x1 = random.multivariate_normal(mean, cov1, size=nobs1)
     x2 = random.multivariate_normal(mean, cov2, size=nobs2)
 
-    R = wiser.ztest_cv_from_stats(
+    R = twiser.ztest_cv_from_stats(
       np.mean(x1, axis=0), cov1, nobs1, np.mean(x2, axis=0), cov2, nobs2, alpha=alpha
     )
     results_list.append(R)
@@ -368,7 +368,7 @@ def test_ztest_cv_from_stats_alt(
     x1 = random.multivariate_normal(mean1, cov1, size=nobs1)
     x2 = random.multivariate_normal(mean2, cov2, size=nobs2)
 
-    R = wiser.ztest_cv_from_stats(
+    R = twiser.ztest_cv_from_stats(
       np.mean(x1, axis=0), cov1, nobs1, np.mean(x2, axis=0), cov2, nobs2, alpha=alpha
     )
     results_list.append(R)
@@ -419,7 +419,7 @@ def test_ztest_cv_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, alpha,
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    R = wiser.ztest_cv_train(x1, input1, x2, input2, alpha=alpha, clf=clf, random=random)
+    R = twiser.ztest_cv_train(x1, input1, x2, input2, alpha=alpha, clf=clf, random=random)
     results_list.append(R)
 
   pval = gen_validate(results_list, true_value=0.0, alpha=alpha)
@@ -469,7 +469,7 @@ def test_ztest_cv_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_params,
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    R = wiser.ztest_cv_train(x1, input1, x2, input2, alpha=alpha, clf=clf, random=random)
+    R = twiser.ztest_cv_train(x1, input1, x2, input2, alpha=alpha, clf=clf, random=random)
     results_list.append(R)
 
   pval = gen_validate(results_list, true_value=true_value, alpha=alpha, test_null=False)
@@ -518,7 +518,7 @@ def test_ztest_stacked_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, a
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    R = wiser.ztest_stacked_train(x1, input1, x2, input2, alpha=alpha, clf=clf, random=random)
+    R = twiser.ztest_stacked_train(x1, input1, x2, input2, alpha=alpha, clf=clf, random=random)
     results_list.append(R)
 
   pval = gen_validate(results_list, true_value=0.0, alpha=alpha)
@@ -568,7 +568,7 @@ def test_ztest_stacked_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_pa
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    R = wiser.ztest_stacked_train(x1, input1, x2, input2, alpha=alpha, clf=clf, random=random)
+    R = twiser.ztest_stacked_train(x1, input1, x2, input2, alpha=alpha, clf=clf, random=random)
     results_list.append(R)
 
   pval = gen_validate(results_list, true_value=true_value, alpha=alpha, test_null=False)
@@ -619,7 +619,7 @@ def test_ztest_stacked_train_blockwise_null(
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    R = wiser.ztest_stacked_train_blockwise(
+    R = twiser.ztest_stacked_train_blockwise(
       x1, input1, x2, input2, alpha=alpha, clf=clf, random=random
     )
     results_list.append(R)
@@ -673,7 +673,7 @@ def test_ztest_stacked_train_blockwise_alt(
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    R = wiser.ztest_stacked_train_blockwise(
+    R = twiser.ztest_stacked_train_blockwise(
       x1, input1, x2, input2, alpha=alpha, clf=clf, random=random
     )
     results_list.append(R)
@@ -725,7 +725,7 @@ def test_ztest_stacked_mlrate_train_null(nobs1, nobs2, std1, std2, shift1, gu_pa
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    estimate, (lb, ub), pval, fallback = wiser._ztest_stacked_mlrate_train(
+    estimate, (lb, ub), pval, fallback = twiser._ztest_stacked_mlrate_train(
       x1, input1, x2, input2, alpha=alpha, clf=clf, random=random
     )
     R = (estimate, (lb, ub), pval)
@@ -785,7 +785,7 @@ def test_ztest_stacked_mlrate_train_alt(
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    estimate, (lb, ub), pval, fallback = wiser._ztest_stacked_mlrate_train(
+    estimate, (lb, ub), pval, fallback = twiser._ztest_stacked_mlrate_train(
       x1, input1, x2, input2, alpha=alpha, clf=clf, random=random
     )
     R = (estimate, (lb, ub), pval)

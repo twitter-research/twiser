@@ -13,9 +13,9 @@ The package is installed with:
 
 .. code-block:: bash
 
-   pip install wiser
+   pip install twiser
 
-See `GitHub <https://github.com/twitter/wiser>`_, `PyPI <https://pypi.org/project/wiser/>`_, and `Read the Docs <https://wiser.readthedocs.io/en/latest/>`_.
+See `GitHub <https://github.com/twitter/twiser>`_, `PyPI <https://pypi.org/project/twiser/>`_, and `Read the Docs <https://twiser.readthedocs.io/en/latest/>`_.
 
 Example Usage
 =============
@@ -25,16 +25,16 @@ TODO
 Support
 =======
 
-Create a `new issue <https://github.com/twitter-research/wiser/issues/new/choose>`_ or `join a discussion <https://github.com/twitter-research/wiser/discussions>`_.
+Create a `new issue <https://github.com/twitter-research/twiser/issues/new/choose>`_ or `join a discussion <https://github.com/twitter-research/twiser/discussions>`_.
 
 Links
 =====
 
-The `source <https://github.com/twitter/wiser>`_ is hosted on GitHub.
+The `source <https://github.com/twitter/twiser>`_ is hosted on GitHub.
 
-The `documentation <https://wiser.readthedocs.io/en/latest/>`_ is hosted at Read the Docs.
+The `documentation <https://twiser.readthedocs.io/en/latest/>`_ is hosted at Read the Docs.
 
-Installable from `PyPI <https://pypi.org/project/wiser/>`_.
+Installable from `PyPI <https://pypi.org/project/twiser/>`_.
 
 License
 =======
