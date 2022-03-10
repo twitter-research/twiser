@@ -1042,7 +1042,7 @@ def ztest_stacked_train_load_blockwise(
 
   Parameters
   ----------
-  data_iter : Sequence[Callable[[], Tuple[:class:`numpy:numpy.ndarray`, :class:`numpy:numpy.ndarray`, :class:`numpy:numpy.ndarray`, :class:`numpy:numpy.ndarray`]]
+  data_iter : Sequence[Callable[[], Tuple[ndarray, ndarray, ndarray, ndarray]]]
     An iterable of functions, where each function returns a different cross validation fold. The
     functions should return data in the format of a tuple: ``(x, x_covariates, y, y_covariates)``.
     See the parameters of :func:`ztest_stacked_train_blockwise` for details on the shapes of these
@@ -1065,6 +1065,10 @@ def ztest_stacked_train_load_blockwise(
   pval :
     The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
+  # The dtype for best sphinx generation on data_iter is:
+  # Sequence[Callable[[], Tuple[:class:`numpy:numpy.ndarray`, :class:`numpy:numpy.ndarray`,
+  #   :class:`numpy:numpy.ndarray`, :class:`numpy:numpy.ndarray`]]
+  # but that messes up the max line length.
   k_fold = len(data_iter)
   assert k_fold >= MIN_FOLD
   _validate_alpha(alpha)
