@@ -10,15 +10,13 @@
 as using :func:`scipy.stats.ttest_ind` and :func:`scipy.stats.ttest_ind_from_stats`. A lot of the
 API is designed to match that simplicity as much as possible.
 
-The package currently supports four kinds of tests:
+The package currently supports three kinds of tests:
 
 * basic :math:`z`-test: This is the one from the intro stats textbooks.
 * cv: This is a held out control variate method (train the predictor on a held out set).
 * stacked: This is a :math:`k`-fold cross validation type setup when training the predictor.
-* mlrate: This is the MLRATE method.
 
-The distinction between basic, cv, and stacked is discussed in [1]_. While the MLRATE method comes
-from [2]_.
+The distinction between basic, cv, and stacked is discussed in [1]_.
 
 Each method has a few different ways to call it:
 
@@ -41,11 +39,6 @@ References
 .. [1] `I. Barr. Reducing the variance of A/B tests using prior information. Degenerate State, Jun
    2018
    <https://www.degeneratestate.org/posts/2018/Jan/04/reducing-the-variance-of-ab-test-using-prior-information/>`_.
-
-.. [2] `Y. Guo, D. Coey, M. Konutgan, W. Li, C. Schoener, and M. Goldman. Machine learning for
-   variance reduction in online experiments. In The 7th Annual Conference on Digital Experimentation
-   @ MIT, 2020
-   <https://arxiv.org/abs/2106.07263>`_.
 """
 import warnings
 from copy import deepcopy
@@ -55,7 +48,7 @@ import numpy as np
 import numpy.typing as npt
 import scipy.stats as ss
 from sklearn.base import clone
-from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.linear_model import LogisticRegression
 
 # Defaults
 ALPHA = 0.95
@@ -1132,174 +1125,3 @@ def ztest_stacked_train_load_blockwise(
     nobs2[kk] = n_y
   R = ztest_stacked_from_stats(mean1, cov1, nobs1, mean2, cov2, nobs2, alpha=alpha)
   return R
-
-
-def _ztest_stacked_mlrate_train(
-  x: npt.ArrayLike,
-  x_covariates: npt.ArrayLike,
-  y: npt.ArrayLike,
-  y_covariates: npt.ArrayLike,
-  *,
-  alpha: float = ALPHA,
-  k_fold: int = K_FOLD,
-  health_check_input: bool = False,
-  health_check_output: bool = True,
-  clf: Model = None,
-  random: Rng = None,
-  ddof: int = 1,
-) -> TestResult:
-  """See ztest_stacked_mlrate_train."""
-  (x, x_covariates, y, y_covariates), (n_x, n_y, _) = _validate_train_data(
-    x, x_covariates, y, y_covariates, k_fold=k_fold
-  )
-  _validate_alpha(alpha)
-  _validate_ddof(ddof)
-
-  if health_check_input:
-    _health_check_features(x_covariates, y_covariates)
-
-  if clf is None:
-    clf = PassThruPred()
-
-  if random is None:
-    random = np_random
-
-  # Sample the folds
-  fold_idx_x = _fold_idx(n_x, k_fold, random=random)
-  fold_idx_y = _fold_idx(n_y, k_fold, random=random)
-
-  # Setup the vars
-  N = n_x + n_y
-  p_hat = n_x / float(N)
-
-  # Do the K-fold cross validation prediction
-  xp = np.ones((n_x, 3))
-  yp = np.zeros((n_y, 3))
-  for kk in range(k_fold):
-    z_covariates = np.concatenate(
-      (x_covariates[fold_idx_x != kk, :], y_covariates[fold_idx_y != kk, :]), axis=0
-    )
-    z = np.concatenate((x[fold_idx_x != kk], y[fold_idx_y != kk]), axis=0)
-    clf.fit(z_covariates, z)
-
-    xp[fold_idx_x == kk, 1] = clf.predict(x_covariates[fold_idx_x == kk, :])
-    yp[fold_idx_y == kk, 1] = clf.predict(y_covariates[fold_idx_y == kk, :])
-
-  if health_check_output:
-    _health_check_output(xp[:, 1], yp[:, 1])
-
-  # Setup the variables for the CV regression based on the predictions
-  outcome_all = np.concatenate((x, y), axis=0)
-  reg_mat = np.concatenate((xp, yp), axis=0)
-  # Note that reg_mat[:, 2] is just an interaction term of sorts
-  reg_mat[:, 2] = reg_mat[:, 0] * (reg_mat[:, 1] - np.mean(reg_mat[:, 1]))
-
-  # Do the regression
-  reg = LinearRegression(fit_intercept=True, normalize=False)
-  reg.fit(reg_mat, outcome_all)
-  assert reg.coef_.shape == (3,)
-  assert reg.intercept_.shape == ()
-  alpha_coef = np.zeros(4)
-  alpha_coef[0] = reg.intercept_
-  alpha_coef[1:] = reg.coef_
-  assert np.all(np.isfinite(alpha_coef))
-
-  # Get a sample variance based on results of the regression
-  fac = (alpha_coef[2] * p_hat + (alpha_coef[2] + alpha_coef[3]) * (1 - p_hat)) ** 2
-  pred_var = np.var(reg_mat[:, 1], ddof=ddof) / (p_hat * (1 - p_hat))
-  base_var = np.var(y, ddof=ddof) / (1 - p_hat) + np.var(x, ddof=ddof) / p_hat
-  sample_var = base_var - (pred_var * fac)
-  assert np.isfinite(sample_var)
-  if sample_var <= 0.0:
-    warnings.warn(
-      "MLRATE calculated a negative sample variance. The predictor is probably garbage. "
-      "Falling back on a no variance reduction test.",
-      UserWarning,
-    )
-    estimate, (lb, ub), pval = ztest(x, y, alpha=alpha, ddof=ddof)
-    return estimate, (lb, ub), pval, True
-
-  # Extract Gaussian parameters of sampling distribution
-  estimate = alpha_coef[1]
-  sample_scale = np.sqrt(sample_var / N)
-
-  # Regular setup to get test results based on Gaussian sampling distribution
-  assert sample_scale > 0.0
-  lb, ub = ss.norm.interval(alpha, loc=estimate, scale=sample_scale)
-  pval = 2 * ss.norm.cdf(-np.abs(estimate), loc=0.0, scale=sample_scale)
-  return estimate, (lb, ub), pval, False
-
-
-def ztest_stacked_mlrate_train(
-  x: npt.ArrayLike,
-  x_covariates: npt.ArrayLike,
-  y: npt.ArrayLike,
-  y_covariates: npt.ArrayLike,
-  *,
-  alpha: float = ALPHA,
-  k_fold: int = K_FOLD,
-  health_check_input: bool = False,
-  health_check_output: bool = True,
-  clf: Model = None,
-  random: Rng = None,
-  ddof: int = 1,
-):
-  r"""Very similar to :func:`ztest_stacked_train` but uses the method of [2]_ to try to account for
-  the correlations between cross validation folds.
-
-  The covariates/features must be independent of assignment to treatment or control. If the features
-  in treatment and control have a different distribution then the test may be invalid.
-
-  Parameters
-  ----------
-  x : :class:`numpy:numpy.ndarray` of shape (n,)
-    Outcomes for the treatment group.
-  x_covariates : :class:`numpy:numpy.ndarray` of shape (n, d)
-    Covariates/features for the treatment group.
-  y : :class:`numpy:numpy.ndarray` of shape (m,)
-    Outcomes for the control group.
-  y_covariates : :class:`numpy:numpy.ndarray` of shape (m, d)
-    Covariates/features for the control group.
-  alpha : float
-    Required confidence level, typically this should be 0.95, and must be inside the interval range
-    :math:`(0, 1]`.
-  k_fold : int
-    The number of folds in the cross validation: :math:`k`.
-  health_check_input : bool
-    If ``True`` perform a health check that ensures the features have the same distribution in
-    treatment and control. If not, issue a warning. It works by training a classifier to predict if
-    a data point is in training or control. This can be slow for a large data set since it requires
-    training a classifier.
-  health_check_output : bool
-    If ``True`` perform a health check that ensures the predictions have the same distribution in
-    treatment and control. If not, issue a warning.
-  clf : sklearn-like regression object
-    An object that has a `fit` and `predict` routine to make predictions.
-  random : :class:`numpy:numpy.random.RandomState`
-    An optional numpy random stream can be passed in for reproducibility.
-  ddof : int
-    The "Delta Degrees of Freedom" argument for computing sample variances.
-
-  Returns
-  -------
-  estimate :
-    Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
-  ci :
-    Confidence interval (with coverage `alpha`) for the estimate.
-  pval :
-    The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
-  """
-  estimate, (lb, ub), pval, _ = _ztest_stacked_mlrate_train(
-    x=x,
-    x_covariates=x_covariates,
-    y=y,
-    y_covariates=y_covariates,
-    alpha=alpha,
-    k_fold=k_fold,
-    health_check_input=health_check_input,
-    health_check_output=health_check_output,
-    clf=clf,
-    random=random,
-    ddof=ddof,
-  )
-  return estimate, (lb, ub), pval

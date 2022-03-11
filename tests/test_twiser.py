@@ -618,26 +618,3 @@ def test_ztest_stacked_train_load_blockwise(data, alpha, k_fold, seed):
   assert np.isclose(lb, lb_)
   assert np.isclose(ub, ub_)
   assert np.isclose(pval, pval_)
-
-
-@given(data_vector_pairs_4, data_vector_pairs_4, alphas, folds, seeds)
-def test_ztest_stacked_mlrate_train(xx, yy, alpha, k_fold, seed):
-  (x, xp) = xx
-  (y, yp) = yy
-
-  assume(len(x) >= twiser.MIN_SPLIT * k_fold)
-  assume(len(y) >= twiser.MIN_SPLIT * k_fold)
-
-  random = np.random.RandomState(seed)
-  with warnings.catch_warnings():
-    warnings.simplefilter("ignore", UserWarning)
-    general_hyp_tester(
-      twiser.ztest_stacked_mlrate_train,
-      alpha,
-      x,
-      xp[:, None],
-      y,
-      yp[:, None],
-      k_fold=k_fold,
-      random=random,
-    )
