@@ -3,7 +3,7 @@
 
 from setuptools import find_packages, setup
 
-from wiser import __version__
+from twiser import __version__
 
 
 def read_requirements(name):
@@ -20,10 +20,10 @@ with open("README.rst") as f:
   long_description = f.read()
 
 setup(
-  name="wiser",
+  name="twiser",
   version=__version__,
   packages=find_packages(),
-  url="https://github.com/twitter/wiser/",
+  url="https://github.com/twitter/twiser/",
   author="Ryan Turner",
   author_email=("rdturnermtl@github.com"),
   license="Apache v2",

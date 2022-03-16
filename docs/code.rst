@@ -2,9 +2,9 @@
 User Guide
 ----------
 
-.. _wiser:
+.. _twiser:
 
-.. automodule:: wiser.wiser
+.. automodule:: twiser.twiser
    :members:
    :exclude-members:
    :member-order: bysource

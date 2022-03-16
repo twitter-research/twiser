@@ -82,17 +82,17 @@ qthelp:
 	@echo
 	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
 	      ".qhcp project file in $(BUILDDIR)/qthelp, like this:"
-	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/wiser.qhcp"
+	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/twiser.qhcp"
 	@echo "To view the help file:"
-	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/wiser.qhc"
+	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/twiser.qhc"
 
 devhelp:
 	$(SPHINXBUILD) -b devhelp $(ALLSPHINXOPTS) $(BUILDDIR)/devhelp
 	@echo
 	@echo "Build finished."
 	@echo "To view the help file:"
-	@echo "# mkdir -p $$HOME/.local/share/devhelp/wiser"
-	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/wiser"
+	@echo "# mkdir -p $$HOME/.local/share/devhelp/twiser"
+	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/twiser"
 	@echo "# devhelp"
 
 latex:

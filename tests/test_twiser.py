@@ -10,7 +10,7 @@ from hypothesis.extra.numpy import array_shapes, arrays
 from hypothesis.strategies import booleans, floats, integers, lists
 from hypothesis_gufunc.gufunc import gufunc_args
 from sklearn.linear_model import LinearRegression, Ridge
-from wiser import wiser
+from twiser import twiser
 
 easy_floats = floats(allow_nan=False, allow_infinity=False, min_value=-10.0, max_value=10.0)
 
@@ -99,8 +99,8 @@ def general_float_test(test_f, *args, **kwargs):
 
 @given(data_vectors, data_vectors, alphas, ddofs)
 def test_ztest_from_stats(x, y, alpha, ddof):
-  estimate, (lb, ub), pval = wiser.ztest(x, y, alpha=alpha, ddof=ddof)
-  estimate_, (lb_, ub_), pval_ = wiser.ztest_from_stats(
+  estimate, (lb, ub), pval = twiser.ztest(x, y, alpha=alpha, ddof=ddof)
+  estimate_, (lb_, ub_), pval_ = twiser.ztest_from_stats(
     np.mean(x), np.std(x, ddof=ddof), len(x), np.mean(y), np.std(y, ddof=ddof), len(y), alpha=alpha
   )
 
@@ -112,19 +112,19 @@ def test_ztest_from_stats(x, y, alpha, ddof):
 
 @given(data_vectors, data_vectors, alphas, ddofs)
 def test_ztest_coherence(x, y, alpha, ddof):
-  general_hyp_tester(wiser.ztest, alpha, x, y, ddof=ddof)
+  general_hyp_tester(twiser.ztest, alpha, x, y, ddof=ddof)
 
 
 @given(data_vectors_int, data_vectors_int, alphas, ddofs)
 def test_ztest_dtypes(x, y, alpha, ddof):
-  general_float_test(wiser.ztest, x, y, alpha=alpha, ddof=ddof)
+  general_float_test(twiser.ztest, x, y, alpha=alpha, ddof=ddof)
 
 
 @given(data_vector_pairs_2, ddofs)
 def test_delta_moments(xx, ddof):
   (x, xp) = xx
 
-  mean_delta, std_delta = wiser._delta_moments(np.mean(xx, axis=1), np.cov(xx, ddof=ddof))
+  mean_delta, std_delta = twiser._delta_moments(np.mean(xx, axis=1), np.cov(xx, ddof=ddof))
 
   delta = x - xp
   mean_delta_ = np.mean(delta)
@@ -134,26 +134,26 @@ def test_delta_moments(xx, ddof):
   assert np.isclose(std_delta, std_delta_)
 
 
-@given(train_fracs, integers(2 * wiser.MIN_SPLIT, 100), seeds)
+@given(train_fracs, integers(2 * twiser.MIN_SPLIT, 100), seeds)
 def test_make_train_idx(frac, n, seed):
   random = np.random.RandomState(seed)
-  train_idx = wiser._make_train_idx(frac, n, random=random)
+  train_idx = twiser._make_train_idx(frac, n, random=random)
 
   assert train_idx.shape == (n,)
   assert train_idx.dtype.kind == "b"
 
-  assert np.sum(train_idx) >= wiser.MIN_SPLIT
-  assert np.sum(~train_idx) >= wiser.MIN_SPLIT
+  assert np.sum(train_idx) >= twiser.MIN_SPLIT
+  assert np.sum(~train_idx) >= twiser.MIN_SPLIT
 
   assert np.sum(train_idx).item() in (
     int(np.ceil(frac * n).item()),
-    wiser.MIN_SPLIT,
-    n - wiser.MIN_SPLIT,
+    twiser.MIN_SPLIT,
+    n - twiser.MIN_SPLIT,
   )
 
   # Make sure deterministic
   random = np.random.RandomState(seed)
-  train_idx_ = wiser._make_train_idx(frac, n, random=random)
+  train_idx_ = twiser._make_train_idx(frac, n, random=random)
 
   assert np.all(train_idx == train_idx_)
 
@@ -165,13 +165,13 @@ def test_ztest_cv_from_stats(xx, yy, alpha, ddof):
 
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate, (lb, ub), pval = wiser.ztest_cv(x, xp, y, yp, alpha=alpha, ddof=ddof)
+    estimate, (lb, ub), pval = twiser.ztest_cv(x, xp, y, yp, alpha=alpha, ddof=ddof)
 
   mean1 = np.mean(xx, axis=1)
   cov1 = np.cov(xx, ddof=ddof)
   mean2 = np.mean(yy, axis=1)
   cov2 = np.cov(yy, ddof=ddof)
-  estimate_, (lb_, ub_), pval_ = wiser.ztest_cv_from_stats(
+  estimate_, (lb_, ub_), pval_ = twiser.ztest_cv_from_stats(
     mean1, cov1, len(x), mean2, cov2, len(y), alpha=alpha
   )
 
@@ -188,7 +188,7 @@ def test_ztest_cv_coherence(x, y, alpha, ddof):
 
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    general_hyp_tester(wiser.ztest_cv, alpha, x, xp, y, yp, ddof=ddof)
+    general_hyp_tester(twiser.ztest_cv, alpha, x, xp, y, yp, ddof=ddof)
 
 
 @given(data_vector_pairs_2_int, data_vector_pairs_2_int, alphas, ddofs)
@@ -198,7 +198,7 @@ def test_ztest_cv_dtypes(x, y, alpha, ddof):
 
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    general_float_test(wiser.ztest_cv, x, xp, y, yp, alpha=alpha, ddof=ddof)
+    general_float_test(twiser.ztest_cv, x, xp, y, yp, alpha=alpha, ddof=ddof)
 
 
 @given(data_vector_pairs_4, data_vector_pairs_4, alphas, seeds, train_fracs, ddofs)
@@ -207,19 +207,19 @@ def test_ztest_cv_train(xx, yy, alpha, seed, train_frac, ddof):
   (y, yp) = yy
 
   random = np.random.RandomState(seed)
-  train_idx_x = wiser._make_train_idx(train_frac, len(x), random=random)
-  train_idx_y = wiser._make_train_idx(train_frac, len(y), random=random)
+  train_idx_x = twiser._make_train_idx(train_frac, len(x), random=random)
+  train_idx_y = twiser._make_train_idx(train_frac, len(y), random=random)
 
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate, (lb, ub), pval = wiser.ztest_cv(
+    estimate, (lb, ub), pval = twiser.ztest_cv(
       x[~train_idx_x], xp[~train_idx_x], y[~train_idx_y], yp[~train_idx_y], alpha=alpha, ddof=ddof
     )
 
   random = np.random.RandomState(seed)
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate_, (lb_, ub_), pval_ = wiser.ztest_cv_train(
+    estimate_, (lb_, ub_), pval_ = twiser.ztest_cv_train(
       x, xp[:, None], y, yp[:, None], alpha=alpha, train_frac=train_frac, random=random, ddof=ddof
     )
 
@@ -250,7 +250,7 @@ def test_pool_moments(xx):
     mean_x[kk, :] = np.mean(x, axis=0)
     cov_x[kk, :, :] = np.cov(x.T, ddof=0)
 
-  mean_0, cov_0, nobs_0 = wiser._pool_moments(mean_x, cov_x, nobs_x)
+  mean_0, cov_0, nobs_0 = twiser._pool_moments(mean_x, cov_x, nobs_x)
 
   xx = np.concatenate([x for x, in xx], axis=0)
   nobs_1, d = xx.shape
@@ -268,10 +268,10 @@ def test_fold_idx(n, k, seed):
   k, n = sorted([k, n])  # enforce n <= k
 
   random = np.random.RandomState(seed)
-  idx = wiser._fold_idx(n, k, random=random)
+  idx = twiser._fold_idx(n, k, random=random)
 
   random = np.random.RandomState(seed)
-  idx_ = wiser._fold_idx(n, k, random=random)
+  idx_ = twiser._fold_idx(n, k, random=random)
 
   assert np.all(idx == idx_)  # Ensure deterministic
 
@@ -283,12 +283,12 @@ def test_ztest_stacked_from_stats(xx, yy, alpha, k_fold, seed):
   (x, xp) = xx
   (y, yp) = yy
 
-  assume(len(x) >= wiser.MIN_SPLIT * k_fold)
-  assume(len(y) >= wiser.MIN_SPLIT * k_fold)
+  assume(len(x) >= twiser.MIN_SPLIT * k_fold)
+  assume(len(y) >= twiser.MIN_SPLIT * k_fold)
 
   random = np.random.RandomState(seed)
-  fx = wiser._fold_idx(len(x), k_fold, random=random)
-  fy = wiser._fold_idx(len(y), k_fold, random=random)
+  fx = twiser._fold_idx(len(x), k_fold, random=random)
+  fy = twiser._fold_idx(len(y), k_fold, random=random)
 
   mean_x = np.zeros((k_fold, 2))
   cov_x = np.zeros((k_fold, 2, 2))
@@ -308,9 +308,9 @@ def test_ztest_stacked_from_stats(xx, yy, alpha, k_fold, seed):
 
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate, (lb, ub), pval = wiser.ztest_stacked(x, xp, fx, y, yp, fy, alpha=alpha)
+    estimate, (lb, ub), pval = twiser.ztest_stacked(x, xp, fx, y, yp, fy, alpha=alpha)
 
-  estimate_, (lb_, ub_), pval_ = wiser.ztest_stacked_from_stats(
+  estimate_, (lb_, ub_), pval_ = twiser.ztest_stacked_from_stats(
     mean_x, cov_x, nobs_x, mean_y, cov_y, nobs_y, alpha=alpha
   )
 
@@ -329,12 +329,12 @@ def test_ztest_stacked_coherence(x, y, alpha, k_fold, seed):
   assume(len(y) >= k_fold)
 
   random = np.random.RandomState(seed)
-  fx = wiser._fold_idx(len(x), k_fold, random=random)
-  fy = wiser._fold_idx(len(y), k_fold, random=random)
+  fx = twiser._fold_idx(len(x), k_fold, random=random)
+  fy = twiser._fold_idx(len(y), k_fold, random=random)
 
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    general_hyp_tester(wiser.ztest_stacked, alpha, x, xp, fx, y, yp, fy)
+    general_hyp_tester(twiser.ztest_stacked, alpha, x, xp, fx, y, yp, fy)
 
 
 @given(data_vector_pairs_2_int, data_vector_pairs_2_int, alphas, folds, seeds)
@@ -346,12 +346,12 @@ def test_ztest_stacked_dtypes(x, y, alpha, k_fold, seed):
   assume(len(y) >= k_fold)
 
   random = np.random.RandomState(seed)
-  fx = wiser._fold_idx(len(x), k_fold, random=random)
-  fy = wiser._fold_idx(len(y), k_fold, random=random)
+  fx = twiser._fold_idx(len(x), k_fold, random=random)
+  fy = twiser._fold_idx(len(y), k_fold, random=random)
 
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    general_float_test(wiser.ztest_stacked, x, xp, fx, y, yp, fy, alpha=alpha)
+    general_float_test(twiser.ztest_stacked, x, xp, fx, y, yp, fy, alpha=alpha)
 
 
 @given(data_vector_pairs_4, data_vector_pairs_4, alphas, folds, seeds)
@@ -359,18 +359,18 @@ def test_ztest_stacked_train(xx, yy, alpha, k_fold, seed):
   (x, xp) = xx
   (y, yp) = yy
 
-  assume(len(x) >= wiser.MIN_SPLIT * k_fold)
-  assume(len(y) >= wiser.MIN_SPLIT * k_fold)
+  assume(len(x) >= twiser.MIN_SPLIT * k_fold)
+  assume(len(y) >= twiser.MIN_SPLIT * k_fold)
 
   # Right now fold idx is not used by stacked estimator so we can pass in None, but might change
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate, (lb, ub), pval = wiser.ztest_stacked(x, xp, None, y, yp, None, alpha=alpha)
+    estimate, (lb, ub), pval = twiser.ztest_stacked(x, xp, None, y, yp, None, alpha=alpha)
 
   random = np.random.RandomState(seed)
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate_, (lb_, ub_), pval_ = wiser.ztest_stacked_train(
+    estimate_, (lb_, ub_), pval_ = twiser.ztest_stacked_train(
       x, xp[:, None], y, yp[:, None], alpha=alpha, k_fold=k_fold, random=random
     )
 
@@ -385,18 +385,18 @@ def test_ztest_stacked_train_blockwise(xx, yy, alpha, k_fold, seed):
   (x, xp) = xx
   (y, yp) = yy
 
-  assume(len(x) >= wiser.MIN_SPLIT * k_fold)
-  assume(len(y) >= wiser.MIN_SPLIT * k_fold)
+  assume(len(x) >= twiser.MIN_SPLIT * k_fold)
+  assume(len(y) >= twiser.MIN_SPLIT * k_fold)
 
   # Right now fold idx is not used by stacked estimator so we can pass in None, but might change
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate, (lb, ub), pval = wiser.ztest_stacked(x, xp, None, y, yp, None, alpha=alpha)
+    estimate, (lb, ub), pval = twiser.ztest_stacked(x, xp, None, y, yp, None, alpha=alpha)
 
   random = np.random.RandomState(seed)
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate_, (lb_, ub_), pval_ = wiser.ztest_stacked_train_blockwise(
+    estimate_, (lb_, ub_), pval_ = twiser.ztest_stacked_train_blockwise(
       x, xp[:, None], y, yp[:, None], alpha=alpha, k_fold=k_fold, random=random
     )
 
@@ -411,7 +411,7 @@ def test_ztest_stacked_train_blockwise(xx, yy, alpha, k_fold, seed):
     "(n),(n,d),(m),(m,d)->()",
     dtype=np.float_,
     elements=easy_floats,
-    min_side={"n": 2 * wiser.MIN_SPLIT, "m": 2 * wiser.MIN_SPLIT, "d": 1},
+    min_side={"n": 2 * twiser.MIN_SPLIT, "m": 2 * twiser.MIN_SPLIT, "d": 1},
     max_side={"n": 20, "m": 20, "d": 3},
   ),
   alphas,
@@ -424,14 +424,14 @@ def test_ztest_stacked_train_to_raw(data, alpha, k_fold, seed):
   n_x = len(x)
   n_y = len(y)
 
-  assume(n_x >= wiser.MIN_SPLIT * k_fold)
-  assume(n_y >= wiser.MIN_SPLIT * k_fold)
+  assume(n_x >= twiser.MIN_SPLIT * k_fold)
+  assume(n_y >= twiser.MIN_SPLIT * k_fold)
 
   clf = LinearRegression()
 
   random = np.random.RandomState(seed)
-  fold_idx_x = wiser._fold_idx(n_x, k_fold, random=random)
-  fold_idx_y = wiser._fold_idx(n_y, k_fold, random=random)
+  fold_idx_x = twiser._fold_idx(n_x, k_fold, random=random)
+  fold_idx_y = twiser._fold_idx(n_y, k_fold, random=random)
 
   xx = []
   yy = []
@@ -456,14 +456,14 @@ def test_ztest_stacked_train_to_raw(data, alpha, k_fold, seed):
 
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate, (lb, ub), pval = wiser.ztest_stacked(
+    estimate, (lb, ub), pval = twiser.ztest_stacked(
       xx, xp, fold_idx_x, yy, yp, fold_idx_y, alpha=alpha
     )
 
   random = np.random.RandomState(seed)
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate_, (lb_, ub_), pval_ = wiser.ztest_stacked_train(
+    estimate_, (lb_, ub_), pval_ = twiser.ztest_stacked_train(
       x,
       x_covariates,
       y,
@@ -485,7 +485,7 @@ def test_ztest_stacked_train_to_raw(data, alpha, k_fold, seed):
     "(n),(n,d),(m),(m,d)->()",
     dtype=np.float_,
     elements=easy_floats,
-    min_side={"n": 2 * wiser.MIN_SPLIT, "m": 2 * wiser.MIN_SPLIT, "d": 1},
+    min_side={"n": 2 * twiser.MIN_SPLIT, "m": 2 * twiser.MIN_SPLIT, "d": 1},
     max_side={"n": 20, "m": 20, "d": 3},
   ),
   alphas,
@@ -498,14 +498,14 @@ def test_ztest_stacked_train_to_from_stats(data, alpha, k_fold, seed):
   n_x = len(x)
   n_y = len(y)
 
-  assume(n_x >= wiser.MIN_SPLIT * k_fold)
-  assume(n_y >= wiser.MIN_SPLIT * k_fold)
+  assume(n_x >= twiser.MIN_SPLIT * k_fold)
+  assume(n_y >= twiser.MIN_SPLIT * k_fold)
 
   clf = Ridge(alpha=1.0, solver="svd")
 
   random = np.random.RandomState(seed)
-  fold_idx_x = wiser._fold_idx(n_x, k_fold, random=random)
-  fold_idx_y = wiser._fold_idx(n_y, k_fold, random=random)
+  fold_idx_x = twiser._fold_idx(n_x, k_fold, random=random)
+  fold_idx_y = twiser._fold_idx(n_y, k_fold, random=random)
 
   mean1 = np.zeros((k_fold, 2))
   cov1 = np.zeros((k_fold, 2, 2))
@@ -534,14 +534,14 @@ def test_ztest_stacked_train_to_from_stats(data, alpha, k_fold, seed):
     cov2[kk, :, :] = np.cov((y_kk, yp), ddof=0)
     nobs2[kk] = np.sum(fold_idx_y == kk)
 
-  estimate, (lb, ub), pval = wiser.ztest_stacked_from_stats(
+  estimate, (lb, ub), pval = twiser.ztest_stacked_from_stats(
     mean1, cov1, nobs1, mean2, cov2, nobs2, alpha=alpha
   )
 
   random = np.random.RandomState(seed)
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate_, (lb_, ub_), pval_ = wiser.ztest_stacked_train(
+    estimate_, (lb_, ub_), pval_ = twiser.ztest_stacked_train(
       x,
       x_covariates,
       y,
@@ -563,7 +563,7 @@ def test_ztest_stacked_train_to_from_stats(data, alpha, k_fold, seed):
     "(n),(n,d),(m),(m,d)->()",
     dtype=np.float_,
     elements=easy_floats,
-    min_side={"n": 2 * wiser.MIN_SPLIT, "m": 2 * wiser.MIN_SPLIT, "d": 1},
+    min_side={"n": 2 * twiser.MIN_SPLIT, "m": 2 * twiser.MIN_SPLIT, "d": 1},
     max_side={"n": 20, "m": 20, "d": 3},
   ),
   alphas,
@@ -576,14 +576,14 @@ def test_ztest_stacked_train_load_blockwise(data, alpha, k_fold, seed):
   n_x = len(x)
   n_y = len(y)
 
-  assume(n_x >= wiser.MIN_SPLIT * k_fold)
-  assume(n_y >= wiser.MIN_SPLIT * k_fold)
+  assume(n_x >= twiser.MIN_SPLIT * k_fold)
+  assume(n_y >= twiser.MIN_SPLIT * k_fold)
 
   clf = Ridge(alpha=1.0, solver="svd")
 
   random = np.random.RandomState(seed)
-  fold_idx_x = wiser._fold_idx(n_x, k_fold, random=random)
-  fold_idx_y = wiser._fold_idx(n_y, k_fold, random=random)
+  fold_idx_x = twiser._fold_idx(n_x, k_fold, random=random)
+  fold_idx_y = twiser._fold_idx(n_y, k_fold, random=random)
 
   def data_gen(kk):
     R = (
@@ -596,14 +596,14 @@ def test_ztest_stacked_train_load_blockwise(data, alpha, k_fold, seed):
 
   data_iter = [partial(data_gen, kk=kk) for kk in range(k_fold)]
 
-  estimate, (lb, ub), pval = wiser.ztest_stacked_train_load_blockwise(
+  estimate, (lb, ub), pval = twiser.ztest_stacked_train_load_blockwise(
     data_iter, alpha=alpha, clf=clf
   )
 
   random = np.random.RandomState(seed)
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate_, (lb_, ub_), pval_ = wiser.ztest_stacked_train_blockwise(
+    estimate_, (lb_, ub_), pval_ = twiser.ztest_stacked_train_blockwise(
       x,
       x_covariates,
       y,
@@ -618,26 +618,3 @@ def test_ztest_stacked_train_load_blockwise(data, alpha, k_fold, seed):
   assert np.isclose(lb, lb_)
   assert np.isclose(ub, ub_)
   assert np.isclose(pval, pval_)
-
-
-@given(data_vector_pairs_4, data_vector_pairs_4, alphas, folds, seeds)
-def test_ztest_stacked_mlrate_train(xx, yy, alpha, k_fold, seed):
-  (x, xp) = xx
-  (y, yp) = yy
-
-  assume(len(x) >= wiser.MIN_SPLIT * k_fold)
-  assume(len(y) >= wiser.MIN_SPLIT * k_fold)
-
-  random = np.random.RandomState(seed)
-  with warnings.catch_warnings():
-    warnings.simplefilter("ignore", UserWarning)
-    general_hyp_tester(
-      wiser.ztest_stacked_mlrate_train,
-      alpha,
-      x,
-      xp[:, None],
-      y,
-      yp[:, None],
-      k_fold=k_fold,
-      random=random,
-    )
