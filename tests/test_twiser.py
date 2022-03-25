@@ -50,7 +50,7 @@ data_vector_pairs_4 = gufunc_args(
   "(n),(n)->()", dtype=np.float_, elements=easy_floats, min_side=4, max_side=20
 )
 
-alphas = floats(min_value=1e-8, max_value=1.0)
+alphas = floats(min_value=0.0, max_value=1.0 - 1e-8)
 seeds = integers(min_value=0, max_value=2 ** 30)
 ddofs = integers(0, 1)
 folds = integers(2, 10)
@@ -71,7 +71,7 @@ def general_hyp_tester(test_f, alpha, *args, **kwargs):
     return
 
   # Now test "inversion"
-  estimate_, (lb_, ub_), pval_ = test_f(*args, **kwargs, alpha=1.0 - pval)
+  estimate_, (lb_, ub_), pval_ = test_f(*args, **kwargs, alpha=pval)
 
   # These should be invariant to alpha
   assert estimate == estimate_

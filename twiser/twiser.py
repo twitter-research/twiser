@@ -50,7 +50,7 @@ from sklearn.base import clone
 from sklearn.linear_model import LogisticRegression
 
 # Defaults
-ALPHA = 0.95
+ALPHA = 0.05
 K_FOLD = 5
 TRAIN_FRAC = 0.2
 HEALTH_CHK_PVAL = 1e-6
@@ -125,8 +125,8 @@ def _is_psd2(cov: npt.ArrayLike) -> bool:
 def _validate_alpha(alpha: float) -> None:
   # Only scalars coming in, so no need to pass back an np version
   assert np.shape(alpha) == ()
-  assert 0.0 < alpha
-  assert alpha <= 1.0
+  assert 0.0 <= alpha
+  assert alpha < 1.0
 
 
 def _validate_ddof(ddof: int) -> None:
@@ -328,7 +328,7 @@ def ztest_from_stats(
     lb, ub = estimate, estimate
     pval = np.float_(estimate == 0.0)
   else:
-    lb, ub = ss.norm.interval(alpha, loc=estimate, scale=std_err)
+    lb, ub = ss.norm.interval(1.0 - alpha, loc=estimate, scale=std_err)
     pval = 2 * ss.norm.cdf(-np.abs(estimate), loc=0.0, scale=std_err)
   return estimate, (lb, ub), pval
 
