@@ -427,7 +427,7 @@ def test_ztest_stacked_train_to_raw(data, alpha, k_fold, seed):
   assume(n_x >= twiser.MIN_SPLIT * k_fold)
   assume(n_y >= twiser.MIN_SPLIT * k_fold)
 
-  clf = LinearRegression()
+  predictor = LinearRegression()
 
   random = np.random.RandomState(seed)
   fold_idx_x = twiser._fold_idx(n_x, k_fold, random=random)
@@ -442,12 +442,12 @@ def test_ztest_stacked_train_to_raw(data, alpha, k_fold, seed):
       (x_covariates[fold_idx_x != kk, :], y_covariates[fold_idx_y != kk, :]), axis=0
     )
     z = np.concatenate((x[fold_idx_x != kk], y[fold_idx_y != kk]), axis=0)
-    clf.fit(z_covariates, z)
+    predictor.fit(z_covariates, z)
 
     xx.append(x[fold_idx_x == kk])
     yy.append(y[fold_idx_y == kk])
-    xp.append(clf.predict(x_covariates[fold_idx_x == kk, :]))
-    yp.append(clf.predict(y_covariates[fold_idx_y == kk, :]))
+    xp.append(predictor.predict(x_covariates[fold_idx_x == kk, :]))
+    yp.append(predictor.predict(y_covariates[fold_idx_y == kk, :]))
 
   xx = np.concatenate(xx, axis=0)
   xp = np.concatenate(xp, axis=0)
@@ -471,7 +471,7 @@ def test_ztest_stacked_train_to_raw(data, alpha, k_fold, seed):
       alpha=alpha,
       k_fold=k_fold,
       random=random,
-      clf=LinearRegression(),
+      predictor=LinearRegression(),
     )
 
   assert np.isclose(estimate, estimate_)
@@ -501,7 +501,7 @@ def test_ztest_stacked_train_to_from_stats(data, alpha, k_fold, seed):
   assume(n_x >= twiser.MIN_SPLIT * k_fold)
   assume(n_y >= twiser.MIN_SPLIT * k_fold)
 
-  clf = Ridge(alpha=1.0, solver="svd")
+  predictor = Ridge(alpha=1.0, solver="svd")
 
   random = np.random.RandomState(seed)
   fold_idx_x = twiser._fold_idx(n_x, k_fold, random=random)
@@ -518,17 +518,17 @@ def test_ztest_stacked_train_to_from_stats(data, alpha, k_fold, seed):
       (x_covariates[fold_idx_x != kk, :], y_covariates[fold_idx_y != kk, :]), axis=0
     )
     z = np.concatenate((x[fold_idx_x != kk], y[fold_idx_y != kk]), axis=0)
-    clf.fit(z_covariates, z)
+    predictor.fit(z_covariates, z)
 
     x_kk = x[fold_idx_x == kk]
-    xp = clf.predict(x_covariates[fold_idx_x == kk])
+    xp = predictor.predict(x_covariates[fold_idx_x == kk])
     mean1[kk, 0] = np.mean(x_kk)
     mean1[kk, 1] = np.mean(xp)
     cov1[kk, :, :] = np.cov((x_kk, xp), ddof=0)
     nobs1[kk] = np.sum(fold_idx_x == kk)
 
     y_kk = y[fold_idx_y == kk]
-    yp = clf.predict(y_covariates[fold_idx_y == kk])
+    yp = predictor.predict(y_covariates[fold_idx_y == kk])
     mean2[kk, 0] = np.mean(y_kk)
     mean2[kk, 1] = np.mean(yp)
     cov2[kk, :, :] = np.cov((y_kk, yp), ddof=0)
@@ -549,7 +549,7 @@ def test_ztest_stacked_train_to_from_stats(data, alpha, k_fold, seed):
       alpha=alpha,
       k_fold=k_fold,
       random=random,
-      clf=Ridge(alpha=1.0, solver="svd"),
+      predictor=Ridge(alpha=1.0, solver="svd"),
     )
 
   assert np.isclose(estimate, estimate_)
@@ -579,7 +579,7 @@ def test_ztest_stacked_train_load_blockwise(data, alpha, k_fold, seed):
   assume(n_x >= twiser.MIN_SPLIT * k_fold)
   assume(n_y >= twiser.MIN_SPLIT * k_fold)
 
-  clf = Ridge(alpha=1.0, solver="svd")
+  predictor = Ridge(alpha=1.0, solver="svd")
 
   random = np.random.RandomState(seed)
   fold_idx_x = twiser._fold_idx(n_x, k_fold, random=random)
@@ -597,7 +597,7 @@ def test_ztest_stacked_train_load_blockwise(data, alpha, k_fold, seed):
   data_iter = [partial(data_gen, kk=kk) for kk in range(k_fold)]
 
   estimate, (lb, ub), pval = twiser.ztest_stacked_train_load_blockwise(
-    data_iter, alpha=alpha, clf=clf
+    data_iter, alpha=alpha, predictor=predictor
   )
 
   random = np.random.RandomState(seed)
@@ -611,7 +611,7 @@ def test_ztest_stacked_train_load_blockwise(data, alpha, k_fold, seed):
       alpha=alpha,
       k_fold=k_fold,
       random=random,
-      clf=Ridge(alpha=1.0, solver="svd"),
+      predictor=Ridge(alpha=1.0, solver="svd"),
     )
 
   assert np.isclose(estimate, estimate_)

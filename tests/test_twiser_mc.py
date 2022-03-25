@@ -395,7 +395,7 @@ def test_ztest_cv_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, alpha,
   runs = RUNS
   random = np.random.RandomState(seed)
 
-  clf = LinearRegression()
+  predictor = LinearRegression()
 
   std1 = np.exp(std1)
   std2 = np.exp(std2)
@@ -419,7 +419,7 @@ def test_ztest_cv_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, alpha,
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    R = twiser.ztest_cv_train(x1, input1, x2, input2, alpha=alpha, clf=clf, random=random)
+    R = twiser.ztest_cv_train(x1, input1, x2, input2, alpha=alpha, predictor=predictor, random=random)
     results_list.append(R)
 
   pval = gen_validate(results_list, true_value=0.0, alpha=alpha)
@@ -445,7 +445,7 @@ def test_ztest_cv_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_params,
   runs = RUNS
   random = np.random.RandomState(seed)
 
-  clf = LinearRegression()
+  predictor = LinearRegression()
 
   std1 = np.exp(std1)
   std2 = np.exp(std2)
@@ -469,7 +469,7 @@ def test_ztest_cv_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_params,
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    R = twiser.ztest_cv_train(x1, input1, x2, input2, alpha=alpha, clf=clf, random=random)
+    R = twiser.ztest_cv_train(x1, input1, x2, input2, alpha=alpha, predictor=predictor, random=random)
     results_list.append(R)
 
   pval = gen_validate(results_list, true_value=true_value, alpha=alpha, test_null=False)
@@ -494,7 +494,7 @@ def test_ztest_stacked_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, a
   runs = RUNS
   random = np.random.RandomState(seed)
 
-  clf = LinearRegression()
+  predictor = LinearRegression()
 
   std1 = np.exp(std1)
   std2 = np.exp(std2)
@@ -518,7 +518,7 @@ def test_ztest_stacked_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, a
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    R = twiser.ztest_stacked_train(x1, input1, x2, input2, alpha=alpha, clf=clf, random=random)
+    R = twiser.ztest_stacked_train(x1, input1, x2, input2, alpha=alpha, predictor=predictor, random=random)
     results_list.append(R)
 
   pval = gen_validate(results_list, true_value=0.0, alpha=alpha)
@@ -544,7 +544,7 @@ def test_ztest_stacked_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_pa
   runs = RUNS
   random = np.random.RandomState(seed)
 
-  clf = LinearRegression()
+  predictor = LinearRegression()
 
   std1 = np.exp(std1)
   std2 = np.exp(std2)
@@ -568,7 +568,7 @@ def test_ztest_stacked_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_pa
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    R = twiser.ztest_stacked_train(x1, input1, x2, input2, alpha=alpha, clf=clf, random=random)
+    R = twiser.ztest_stacked_train(x1, input1, x2, input2, alpha=alpha, predictor=predictor, random=random)
     results_list.append(R)
 
   pval = gen_validate(results_list, true_value=true_value, alpha=alpha, test_null=False)
@@ -595,7 +595,7 @@ def test_ztest_stacked_train_blockwise_null(
   runs = RUNS
   random = np.random.RandomState(seed)
 
-  clf = LinearRegression()
+  predictor = LinearRegression()
 
   std1 = np.exp(std1)
   std2 = np.exp(std2)
@@ -620,7 +620,7 @@ def test_ztest_stacked_train_blockwise_null(
     assert x2.shape == (nobs2,)
 
     R = twiser.ztest_stacked_train_blockwise(
-      x1, input1, x2, input2, alpha=alpha, clf=clf, random=random
+      x1, input1, x2, input2, alpha=alpha, predictor=predictor, random=random
     )
     results_list.append(R)
 
@@ -649,7 +649,7 @@ def test_ztest_stacked_train_blockwise_alt(
   runs = RUNS
   random = np.random.RandomState(seed)
 
-  clf = LinearRegression()
+  predictor = LinearRegression()
 
   std1 = np.exp(std1)
   std2 = np.exp(std2)
@@ -674,7 +674,7 @@ def test_ztest_stacked_train_blockwise_alt(
     assert x2.shape == (nobs2,)
 
     R = twiser.ztest_stacked_train_blockwise(
-      x1, input1, x2, input2, alpha=alpha, clf=clf, random=random
+      x1, input1, x2, input2, alpha=alpha, predictor=predictor, random=random
     )
     results_list.append(R)
 
