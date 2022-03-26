@@ -22,7 +22,7 @@ medium_samples = integers(min_value=20, max_value=50)
 big_samples = integers(min_value=100, max_value=500)
 easy_floats = floats(allow_nan=False, allow_infinity=False, min_value=-10.0, max_value=10.0)
 corrs = floats(allow_nan=False, allow_infinity=False, min_value=-0.999, max_value=0.999)
-alphas = floats(min_value=0.0, max_value=0.99)
+alphas = floats(min_value=0.01, max_value=0.99)
 seeds = integers(min_value=0, max_value=2 ** 30)
 
 
