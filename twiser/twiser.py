@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # TODO
-# clf -> predictor?
 # review func names
 # order the funcs for what we want to see in docs
 
@@ -51,7 +50,7 @@ from sklearn.base import clone
 from sklearn.linear_model import LogisticRegression
 
 # Defaults
-ALPHA = 0.95
+ALPHA = 0.05
 K_FOLD = 5
 TRAIN_FRAC = 0.2
 HEALTH_CHK_PVAL = 1e-6
@@ -126,8 +125,8 @@ def _is_psd2(cov: npt.ArrayLike) -> bool:
 def _validate_alpha(alpha: float) -> None:
   # Only scalars coming in, so no need to pass back an np version
   assert np.shape(alpha) == ()
-  assert 0.0 < alpha
-  assert alpha <= 1.0
+  assert 0.0 <= alpha
+  assert alpha < 1.0
 
 
 def _validate_ddof(ddof: int) -> None:
@@ -224,7 +223,7 @@ def _validate_train_data_block(
 
 
 def _health_check_features(
-  x: np.ndarray, y: np.ndarray, *, train_frac: float = TRAIN_FRAC, clf: Model = None
+  x: np.ndarray, y: np.ndarray, *, train_frac: float = TRAIN_FRAC, discriminator: Model = None
 ) -> None:
   random = np.random.RandomState(0)
 
@@ -242,11 +241,11 @@ def _health_check_features(
 
   train_idx = _make_train_idx(train_frac, len(z), random=random)
 
-  # Just hard coding default clf for now
-  if clf is None:
-    clf = LogisticRegression()
-  clf.fit(z[train_idx, :], target[train_idx])
-  pred = clf.predict(z[~train_idx, :])
+  # Just hard coding default discriminator for now
+  if discriminator is None:
+    discriminator = LogisticRegression()
+  discriminator.fit(z[train_idx, :], target[train_idx])
+  pred = discriminator.predict(z[~train_idx, :])
 
   n_correct_guess = np.sum(pred == target[~train_idx])
   n_guess = len(target[~train_idx])
@@ -302,15 +301,15 @@ def ztest_from_stats(
   nobs2 : int
     The number of samples in the control group.
   alpha : float
-    Required confidence level, typically this should be 0.95, and must be inside the interval range
-    :math:`(0, 1]`.
+    Required confidence level, typically this should be 0.05, and must be inside the interval range
+    :math:`[0, 1)`.
 
   Returns
   -------
   estimate :
     Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
   ci :
-    Confidence interval (with coverage `alpha`) for the estimate.
+    Confidence interval (with coverage :math:`1 - \alpha`) for the estimate.
   pval :
     The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
@@ -329,7 +328,7 @@ def ztest_from_stats(
     lb, ub = estimate, estimate
     pval = np.float_(estimate == 0.0)
   else:
-    lb, ub = ss.norm.interval(alpha, loc=estimate, scale=std_err)
+    lb, ub = ss.norm.interval(1.0 - alpha, loc=estimate, scale=std_err)
     pval = 2 * ss.norm.cdf(-np.abs(estimate), loc=0.0, scale=std_err)
   return estimate, (lb, ub), pval
 
@@ -345,8 +344,8 @@ def ztest(x: npt.ArrayLike, y: npt.ArrayLike, *, alpha: float = ALPHA, ddof: int
   y : :class:`numpy:numpy.ndarray` of shape (m,)
     Outcomes for the control group.
   alpha : float
-    Required confidence level, typically this should be 0.95, and must be inside the interval range
-    :math:`(0, 1]`.
+    Required confidence level, typically this should be 0.05, and must be inside the interval range
+    :math:`[0, 1)`.
   ddof : int
     The "Delta Degrees of Freedom" argument for computing sample variances.
 
@@ -355,7 +354,7 @@ def ztest(x: npt.ArrayLike, y: npt.ArrayLike, *, alpha: float = ALPHA, ddof: int
   estimate :
     Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
   ci :
-    Confidence interval (with coverage `alpha`) for the estimate.
+    Confidence interval (with coverage :math:`1 - \alpha`) for the estimate.
   pval :
     The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
@@ -427,15 +426,15 @@ def ztest_cv_from_stats(
   nobs2 : int
     The number of samples in the control group.
   alpha : float
-    Required confidence level, typically this should be 0.95, and must be inside the interval range
-    :math:`(0, 1]`.
+    Required confidence level, typically this should be 0.05, and must be inside the interval range
+    :math:`[0, 1)`.
 
   Returns
   -------
   estimate :
     Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
   ci :
-    Confidence interval (with coverage `alpha`) for the estimate.
+    Confidence interval (with coverage :math:`1 - \alpha`) for the estimate.
   pval :
     The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
@@ -477,8 +476,8 @@ def ztest_cv(
   yp : :class:`numpy:numpy.ndarray` of shape (m,)
     Predicted outcomes for the control group.
   alpha : float
-    Required confidence level, typically this should be 0.95, and must be inside the interval range
-    :math:`(0, 1]`.
+    Required confidence level, typically this should be 0.05, and must be inside the interval range
+    :math:`[0, 1)`.
   health_check_output : bool
     If ``True`` perform a health check that ensures the predictions have the same distribution in
     treatment and control. If not, issue a warning.
@@ -490,7 +489,7 @@ def ztest_cv(
   estimate :
     Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
   ci :
-    Confidence interval (with coverage `alpha`) for the estimate.
+    Confidence interval (with coverage :math:`1 - \alpha`) for the estimate.
   pval :
     The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
@@ -516,7 +515,7 @@ def ztest_cv_train(
   train_frac: float = TRAIN_FRAC,
   health_check_input: bool = False,
   health_check_output: bool = True,
-  clf: Model = None,
+  predictor: Model = None,
   random: Rng = None,
   ddof: int = 1,
 ) -> TestResult:
@@ -536,8 +535,8 @@ def ztest_cv_train(
   y_covariates : :class:`numpy:numpy.ndarray` of shape (m, d)
     Covariates/features for the control group.
   alpha : float
-    Required confidence level, typically this should be 0.95, and must be inside the interval range
-    :math:`(0, 1]`.
+    Required confidence level, typically this should be 0.05, and must be inside the interval range
+    :math:`[0, 1)`.
   train_frac : float
     The fraction of data to hold out for training the predictors. To ensure test validity, we do not
     use the same data for training the predictors and performing the test. This must be inside the
@@ -550,7 +549,7 @@ def ztest_cv_train(
   health_check_output : bool
     If ``True`` perform a health check that ensures the predictions have the same distribution in
     treatment and control. If not, issue a warning.
-  clf : sklearn-like regression object
+  predictor : sklearn-like regression object
     An object that has a `fit` and `predict` routine to make predictions.
   random : :class:`numpy:numpy.random.RandomState`
     An optional numpy random stream can be passed in for reproducibility.
@@ -562,7 +561,7 @@ def ztest_cv_train(
   estimate :
     Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
   ci :
-    Confidence interval (with coverage `alpha`) for the estimate.
+    Confidence interval (with coverage :math:`1 - \alpha`) for the estimate.
   pval :
     The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
@@ -574,8 +573,8 @@ def ztest_cv_train(
   assert train_frac <= 1.0
   _validate_ddof(ddof)
 
-  if clf is None:
-    clf = PassThruPred()
+  if predictor is None:
+    predictor = PassThruPred()
 
   if random is None:
     random = np_random
@@ -591,11 +590,11 @@ def ztest_cv_train(
     (x_covariates[train_idx_x, :], y_covariates[train_idx_y, :]), axis=0
   )
   z = np.concatenate((x[train_idx_x], y[train_idx_y]), axis=0)
-  clf.fit(z_covariates, z)
+  predictor.fit(z_covariates, z)
 
-  xp = clf.predict(x_covariates[~train_idx_x, :])
+  xp = predictor.predict(x_covariates[~train_idx_x, :])
   assert np.all(np.isfinite(xp))
-  yp = clf.predict(y_covariates[~train_idx_y, :])
+  yp = predictor.predict(y_covariates[~train_idx_y, :])
   assert np.all(np.isfinite(yp))
 
   R = ztest_cv(
@@ -619,7 +618,7 @@ def ztest_in_sample_train(
   alpha: float = ALPHA,
   health_check_input: bool = False,
   health_check_output: bool = False,
-  clf: Model = None,
+  predictor: Model = None,
   random: Rng = None,
   ddof: int = 1,
 ) -> TestResult:
@@ -639,8 +638,8 @@ def ztest_in_sample_train(
   y_covariates : :class:`numpy:numpy.ndarray` of shape (m, d)
     Covariates/features for the control group.
   alpha : float
-    Required confidence level, typically this should be 0.95, and must be inside the interval range
-    :math:`(0, 1]`.
+    Required confidence level, typically this should be 0.05, and must be inside the interval range
+    :math:`[0, 1)`.
   health_check_input : bool
     If ``True`` perform a health check that ensures the features have the same distribution in
     treatment and control. If not, issue a warning. It works by training a classifier to predict if
@@ -649,7 +648,7 @@ def ztest_in_sample_train(
   health_check_output : bool
     If ``True`` perform a health check that ensures the predictions have the same distribution in
     treatment and control. If not, issue a warning.
-  clf : sklearn-like regression object
+  predictor : sklearn-like regression object
     An object that has a `fit` and `predict` routine to make predictions.
   random : :class:`numpy:numpy.random.RandomState`
     An optional numpy random stream can be passed in for reproducibility.
@@ -661,7 +660,7 @@ def ztest_in_sample_train(
   estimate :
     Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
   ci :
-    Confidence interval (with coverage `alpha`) for the estimate.
+    Confidence interval (with coverage :math:`1 - \alpha`) for the estimate.
   pval :
     The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
@@ -671,8 +670,8 @@ def ztest_in_sample_train(
   _validate_alpha(alpha)
   _validate_ddof(ddof)
 
-  if clf is None:
-    clf = PassThruPred()
+  if predictor is None:
+    predictor = PassThruPred()
 
   if random is None:
     random = np_random
@@ -682,11 +681,11 @@ def ztest_in_sample_train(
 
   z_covariates = np.concatenate((x_covariates, y_covariates), axis=0)
   z = np.concatenate((x, y), axis=0)
-  clf.fit(z_covariates, z)
+  predictor.fit(z_covariates, z)
 
-  xp = clf.predict(x_covariates)
+  xp = predictor.predict(x_covariates)
   assert np.all(np.isfinite(xp))
-  yp = clf.predict(y_covariates)
+  yp = predictor.predict(y_covariates)
   assert np.all(np.isfinite(yp))
 
   R = ztest_cv(x, xp, y, yp, alpha=alpha, ddof=ddof, health_check_output=health_check_output)
@@ -760,15 +759,15 @@ def ztest_stacked_from_stats(
     The number of samples in the control group, for each fold in the :math:`k`-fold cross
     validation.
   alpha : float
-    Required confidence level, typically this should be 0.95, and must be inside the interval range
-    :math:`(0, 1]`.
+    Required confidence level, typically this should be 0.05, and must be inside the interval range
+    :math:`[0, 1)`.
 
   Returns
   -------
   estimate :
     Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
   ci :
-    Confidence interval (with coverage `alpha`) for the estimate.
+    Confidence interval (with coverage :math:`1 - \alpha`) for the estimate.
   pval :
     The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
@@ -814,8 +813,8 @@ def ztest_stacked(
   y_fold : :class:`numpy:numpy.ndarray` of shape (n,)
     The cross validation fold assignment for each data point in control (of `dtype` `int`).
   alpha : float
-    Required confidence level, typically this should be 0.95, and must be inside the interval range
-    :math:`(0, 1]`.
+    Required confidence level, typically this should be 0.05, and must be inside the interval range
+    :math:`[0, 1)`.
   health_check_output : bool
     If ``True`` perform a health check that ensures the predictions have the same distribution in
     treatment and control. If not, issue a warning.
@@ -825,7 +824,7 @@ def ztest_stacked(
   estimate :
     Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
   ci :
-    Confidence interval (with coverage `alpha`) for the estimate.
+    Confidence interval (with coverage :math:`1 - \alpha`) for the estimate.
   pval :
     The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
@@ -848,7 +847,7 @@ def ztest_stacked_train(
   k_fold: int = K_FOLD,
   health_check_input: bool = False,
   health_check_output: bool = True,
-  clf: Model = None,
+  predictor: Model = None,
   random: Rng = None,
 ) -> TestResult:
   r"""Version of :func:`ztest_stacked` that also trains the control variate predictor.
@@ -867,8 +866,8 @@ def ztest_stacked_train(
   y_covariates : :class:`numpy:numpy.ndarray` of shape (m, d)
     Covariates/features for the control group.
   alpha : float
-    Required confidence level, typically this should be 0.95, and must be inside the interval range
-    :math:`(0, 1]`.
+    Required confidence level, typically this should be 0.05, and must be inside the interval range
+    :math:`[0, 1)`.
   k_fold : int
     The number of folds in the cross validation: :math:`k`.
   health_check_input : bool
@@ -879,7 +878,7 @@ def ztest_stacked_train(
   health_check_output : bool
     If ``True`` perform a health check that ensures the predictions have the same distribution in
     treatment and control. If not, issue a warning.
-  clf : sklearn-like regression object
+  predictor : sklearn-like regression object
     An object that has a `fit` and `predict` routine to make predictions.
   random : :class:`numpy:numpy.random.RandomState`
     An optional numpy random stream can be passed in for reproducibility.
@@ -889,7 +888,7 @@ def ztest_stacked_train(
   estimate :
     Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
   ci :
-    Confidence interval (with coverage `alpha`) for the estimate.
+    Confidence interval (with coverage :math:`1 - \alpha`) for the estimate.
   pval :
     The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
@@ -898,8 +897,8 @@ def ztest_stacked_train(
   )
   _validate_alpha(alpha)
 
-  if clf is None:
-    clf = PassThruPred()
+  if predictor is None:
+    predictor = PassThruPred()
 
   if random is None:
     random = np_random
@@ -917,10 +916,10 @@ def ztest_stacked_train(
       (x_covariates[fold_idx_x != kk, :], y_covariates[fold_idx_y != kk, :]), axis=0
     )
     z = np.concatenate((x[fold_idx_x != kk], y[fold_idx_y != kk]), axis=0)
-    clf.fit(z_covariates, z)
+    predictor.fit(z_covariates, z)
 
-    xp[fold_idx_x == kk] = clf.predict(x_covariates[fold_idx_x == kk])
-    yp[fold_idx_y == kk] = clf.predict(y_covariates[fold_idx_y == kk])
+    xp[fold_idx_x == kk] = predictor.predict(x_covariates[fold_idx_x == kk])
+    yp[fold_idx_y == kk] = predictor.predict(y_covariates[fold_idx_y == kk])
 
   R = ztest_stacked(
     x, xp, fold_idx_x, y, yp, fold_idx_y, alpha=alpha, health_check_output=health_check_output
@@ -938,7 +937,7 @@ def ztest_stacked_train_blockwise(
   k_fold: int = K_FOLD,
   health_check_input: bool = False,
   health_check_output: bool = True,
-  clf: Model = None,
+  predictor: Model = None,
   random: Rng = None,
 ) -> TestResult:
   r"""Version of :func:`ztest_stacked_train` that is more efficient if the fit routine scales worse
@@ -955,8 +954,8 @@ def ztest_stacked_train_blockwise(
   y_covariates : :class:`numpy:numpy.ndarray` of shape (m, d)
     Covariates/features for the control group.
   alpha : float
-    Required confidence level, typically this should be 0.95, and must be inside the interval range
-    :math:`(0, 1]`.
+    Required confidence level, typically this should be 0.05, and must be inside the interval range
+    :math:`[0, 1)`.
   k_fold : int
     The number of folds in the cross validation: :math:`k`.
   health_check_input : bool
@@ -967,7 +966,7 @@ def ztest_stacked_train_blockwise(
   health_check_output : bool
     If ``True`` perform a health check that ensures the predictions have the same distribution in
     treatment and control. If not, issue a warning.
-  clf : sklearn-like regression object
+  predictor : sklearn-like regression object
     An object that has a `fit` and `predict` routine to make predictions.
   random : :class:`numpy:numpy.random.RandomState`
     An optional numpy random stream can be passed in for reproducibility.
@@ -977,7 +976,7 @@ def ztest_stacked_train_blockwise(
   estimate :
     Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
   ci :
-    Confidence interval (with coverage `alpha`) for the estimate.
+    Confidence interval (with coverage :math:`1 - \alpha`) for the estimate.
   pval :
     The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
@@ -986,8 +985,8 @@ def ztest_stacked_train_blockwise(
   )
   _validate_alpha(alpha)
 
-  if clf is None:
-    clf = PassThruPred()
+  if predictor is None:
+    predictor = PassThruPred()
 
   if random is None:
     random = np_random
@@ -1005,10 +1004,10 @@ def ztest_stacked_train_blockwise(
       (x_covariates[fold_idx_x == kk, :], y_covariates[fold_idx_y == kk, :]), axis=0
     )
     z = np.concatenate((x[fold_idx_x == kk], y[fold_idx_y == kk]), axis=0)
-    clf.fit(z_covariates, z)
+    predictor.fit(z_covariates, z)
 
-    xp[fold_idx_x != kk, kk] = clf.predict(x_covariates[fold_idx_x != kk])
-    yp[fold_idx_y != kk, kk] = clf.predict(y_covariates[fold_idx_y != kk])
+    xp[fold_idx_x != kk, kk] = predictor.predict(x_covariates[fold_idx_x != kk])
+    yp[fold_idx_y != kk, kk] = predictor.predict(y_covariates[fold_idx_y != kk])
 
   # Now average the predictions
   assert np.all(np.sum(np.isnan(xp), axis=1) == 1)
@@ -1026,7 +1025,7 @@ def ztest_stacked_train_load_blockwise(
   data_iter: Sequence[DataGen],
   *,
   alpha: float = ALPHA,
-  clf: Model = None,
+  predictor: Model = None,
   callback: Optional[Callable[[Model], None]] = None,
 ) -> TestResult:
   r"""Version of :func:`ztest_stacked_train_blockwise` that loads the data in blocks to avoid
@@ -1041,20 +1040,20 @@ def ztest_stacked_train_load_blockwise(
     See the parameters of :func:`ztest_stacked_train_blockwise` for details on the shapes of these
     variables.
   alpha : float
-    Required confidence level, typically this should be 0.95, and must be inside the interval range
-    :math:`(0, 1]`.
-  clf : sklearn-like regression object
+    Required confidence level, typically this should be 0.05, and must be inside the interval range
+    :math:`[0, 1)`.
+  predictor : sklearn-like regression object
     An object that has a `fit` and `predict` routine to make predictions.
   callback :
     An optional callback that gets called for each cross validation fold in the format
-    ``callback(clf)``. This is sometimes useful for logging.
+    ``callback(predictor)``. This is sometimes useful for logging.
 
   Returns
   -------
   estimate :
     Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
   ci :
-    Confidence interval (with coverage `alpha`) for the estimate.
+    Confidence interval (with coverage :math:`1 - \alpha`) for the estimate.
   pval :
     The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
@@ -1066,16 +1065,16 @@ def ztest_stacked_train_load_blockwise(
   assert k_fold >= MIN_FOLD
   _validate_alpha(alpha)
 
-  if clf is None:
-    clf = PassThruPred()
+  if predictor is None:
+    predictor = PassThruPred()
 
   try:
-    clf = [clone(clf) for _ in range(k_fold)]
+    predictor = [clone(predictor) for _ in range(k_fold)]
   except TypeError:
-    clf = [deepcopy(clf) for _ in range(k_fold)]
+    predictor = [deepcopy(predictor) for _ in range(k_fold)]
 
   # Train a model for each block
-  for clf_, data_gen in zip(clf, data_iter):
+  for predictor_, data_gen in zip(predictor, data_iter):
     (x, x_covariates, y, y_covariates) = data_gen()
     (x, x_covariates, y, y_covariates), _ = _validate_train_data_block(
       x, x_covariates, y, y_covariates
@@ -1083,9 +1082,9 @@ def ztest_stacked_train_load_blockwise(
 
     z_covariates = np.concatenate((x_covariates, y_covariates), axis=0)
     z = np.concatenate((x, y), axis=0)
-    clf_.fit(z_covariates, z)
+    predictor_.fit(z_covariates, z)
     if callback is not None:
-      callback(clf_)
+      callback(predictor_)
 
   # Now the prediction for each block
   mean1 = np.zeros((k_fold, 2))
@@ -1103,10 +1102,10 @@ def ztest_stacked_train_load_blockwise(
     # Get predictions from each fold predictor
     xp = np.nan + np.zeros((n_x, k_fold))
     yp = np.nan + np.zeros((n_y, k_fold))
-    for kk_, clf_ in enumerate(clf):
+    for kk_, predictor_ in enumerate(predictor):
       if kk != kk_:
-        xp[:, kk_] = clf_.predict(x_covariates)
-        yp[:, kk_] = clf_.predict(y_covariates)
+        xp[:, kk_] = predictor_.predict(x_covariates)
+        yp[:, kk_] = predictor_.predict(y_covariates)
 
     # Now average the predictions
     assert np.all(np.sum(np.isnan(xp), axis=1) == 1)
