@@ -27,9 +27,6 @@ jobs:
         pip install -r requirements/tests.txt
         pip install -r requirements/tools.txt
         pip install -e .[test]
-    - name: Lint
-      run: |
-        pre-commit run --all-files
     - name: Test with pytest
       run: |
         pytest tests/ -s -v --disable-pytest-warnings --hypothesis-seed=0
