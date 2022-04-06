@@ -301,15 +301,15 @@ def ztest_from_stats(
   nobs2 : int
     The number of samples in the control group.
   alpha : float
-    Required confidence level, typically this should be 0.95, and must be inside the interval range
-    :math:`(0, 1]`.
+    Required confidence level, typically this should be 0.05, and must be inside the interval range
+    :math:`[0, 1)`.
 
   Returns
   -------
   estimate :
     Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
   ci :
-    Confidence interval (with coverage `alpha`) for the estimate.
+    Confidence interval (with coverage :math:`1 - \alpha`) for the estimate.
   pval :
     The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
@@ -344,8 +344,8 @@ def ztest(x: npt.ArrayLike, y: npt.ArrayLike, *, alpha: float = ALPHA, ddof: int
   y : :class:`numpy:numpy.ndarray` of shape (m,)
     Outcomes for the control group.
   alpha : float
-    Required confidence level, typically this should be 0.95, and must be inside the interval range
-    :math:`(0, 1]`.
+    Required confidence level, typically this should be 0.05, and must be inside the interval range
+    :math:`[0, 1)`.
   ddof : int
     The "Delta Degrees of Freedom" argument for computing sample variances.
 
@@ -354,7 +354,7 @@ def ztest(x: npt.ArrayLike, y: npt.ArrayLike, *, alpha: float = ALPHA, ddof: int
   estimate :
     Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
   ci :
-    Confidence interval (with coverage `alpha`) for the estimate.
+    Confidence interval (with coverage :math:`1 - \alpha`) for the estimate.
   pval :
     The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
@@ -426,15 +426,15 @@ def ztest_cv_from_stats(
   nobs2 : int
     The number of samples in the control group.
   alpha : float
-    Required confidence level, typically this should be 0.95, and must be inside the interval range
-    :math:`(0, 1]`.
+    Required confidence level, typically this should be 0.05, and must be inside the interval range
+    :math:`[0, 1)`.
 
   Returns
   -------
   estimate :
     Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
   ci :
-    Confidence interval (with coverage `alpha`) for the estimate.
+    Confidence interval (with coverage :math:`1 - \alpha`) for the estimate.
   pval :
     The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
@@ -476,8 +476,8 @@ def ztest_cv(
   yp : :class:`numpy:numpy.ndarray` of shape (m,)
     Predicted outcomes for the control group.
   alpha : float
-    Required confidence level, typically this should be 0.95, and must be inside the interval range
-    :math:`(0, 1]`.
+    Required confidence level, typically this should be 0.05, and must be inside the interval range
+    :math:`[0, 1)`.
   health_check_output : bool
     If ``True`` perform a health check that ensures the predictions have the same distribution in
     treatment and control. If not, issue a warning.
@@ -489,7 +489,7 @@ def ztest_cv(
   estimate :
     Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
   ci :
-    Confidence interval (with coverage `alpha`) for the estimate.
+    Confidence interval (with coverage :math:`1 - \alpha`) for the estimate.
   pval :
     The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
@@ -535,8 +535,8 @@ def ztest_cv_train(
   y_covariates : :class:`numpy:numpy.ndarray` of shape (m, d)
     Covariates/features for the control group.
   alpha : float
-    Required confidence level, typically this should be 0.95, and must be inside the interval range
-    :math:`(0, 1]`.
+    Required confidence level, typically this should be 0.05, and must be inside the interval range
+    :math:`[0, 1)`.
   train_frac : float
     The fraction of data to hold out for training the predictors. To ensure test validity, we do not
     use the same data for training the predictors and performing the test. This must be inside the
@@ -561,7 +561,7 @@ def ztest_cv_train(
   estimate :
     Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
   ci :
-    Confidence interval (with coverage `alpha`) for the estimate.
+    Confidence interval (with coverage :math:`1 - \alpha`) for the estimate.
   pval :
     The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
@@ -638,8 +638,8 @@ def ztest_in_sample_train(
   y_covariates : :class:`numpy:numpy.ndarray` of shape (m, d)
     Covariates/features for the control group.
   alpha : float
-    Required confidence level, typically this should be 0.95, and must be inside the interval range
-    :math:`(0, 1]`.
+    Required confidence level, typically this should be 0.05, and must be inside the interval range
+    :math:`[0, 1)`.
   health_check_input : bool
     If ``True`` perform a health check that ensures the features have the same distribution in
     treatment and control. If not, issue a warning. It works by training a classifier to predict if
@@ -660,7 +660,7 @@ def ztest_in_sample_train(
   estimate :
     Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
   ci :
-    Confidence interval (with coverage `alpha`) for the estimate.
+    Confidence interval (with coverage :math:`1 - \alpha`) for the estimate.
   pval :
     The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
@@ -759,15 +759,15 @@ def ztest_stacked_from_stats(
     The number of samples in the control group, for each fold in the :math:`k`-fold cross
     validation.
   alpha : float
-    Required confidence level, typically this should be 0.95, and must be inside the interval range
-    :math:`(0, 1]`.
+    Required confidence level, typically this should be 0.05, and must be inside the interval range
+    :math:`[0, 1)`.
 
   Returns
   -------
   estimate :
     Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
   ci :
-    Confidence interval (with coverage `alpha`) for the estimate.
+    Confidence interval (with coverage :math:`1 - \alpha`) for the estimate.
   pval :
     The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
@@ -813,8 +813,8 @@ def ztest_stacked(
   y_fold : :class:`numpy:numpy.ndarray` of shape (n,)
     The cross validation fold assignment for each data point in control (of `dtype` `int`).
   alpha : float
-    Required confidence level, typically this should be 0.95, and must be inside the interval range
-    :math:`(0, 1]`.
+    Required confidence level, typically this should be 0.05, and must be inside the interval range
+    :math:`[0, 1)`.
   health_check_output : bool
     If ``True`` perform a health check that ensures the predictions have the same distribution in
     treatment and control. If not, issue a warning.
@@ -824,7 +824,7 @@ def ztest_stacked(
   estimate :
     Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
   ci :
-    Confidence interval (with coverage `alpha`) for the estimate.
+    Confidence interval (with coverage :math:`1 - \alpha`) for the estimate.
   pval :
     The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
@@ -866,8 +866,8 @@ def ztest_stacked_train(
   y_covariates : :class:`numpy:numpy.ndarray` of shape (m, d)
     Covariates/features for the control group.
   alpha : float
-    Required confidence level, typically this should be 0.95, and must be inside the interval range
-    :math:`(0, 1]`.
+    Required confidence level, typically this should be 0.05, and must be inside the interval range
+    :math:`[0, 1)`.
   k_fold : int
     The number of folds in the cross validation: :math:`k`.
   health_check_input : bool
@@ -888,7 +888,7 @@ def ztest_stacked_train(
   estimate :
     Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
   ci :
-    Confidence interval (with coverage `alpha`) for the estimate.
+    Confidence interval (with coverage :math:`1 - \alpha`) for the estimate.
   pval :
     The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
@@ -954,8 +954,8 @@ def ztest_stacked_train_blockwise(
   y_covariates : :class:`numpy:numpy.ndarray` of shape (m, d)
     Covariates/features for the control group.
   alpha : float
-    Required confidence level, typically this should be 0.95, and must be inside the interval range
-    :math:`(0, 1]`.
+    Required confidence level, typically this should be 0.05, and must be inside the interval range
+    :math:`[0, 1)`.
   k_fold : int
     The number of folds in the cross validation: :math:`k`.
   health_check_input : bool
@@ -976,7 +976,7 @@ def ztest_stacked_train_blockwise(
   estimate :
     Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
   ci :
-    Confidence interval (with coverage `alpha`) for the estimate.
+    Confidence interval (with coverage :math:`1 - \alpha`) for the estimate.
   pval :
     The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
@@ -1040,8 +1040,8 @@ def ztest_stacked_train_load_blockwise(
     See the parameters of :func:`ztest_stacked_train_blockwise` for details on the shapes of these
     variables.
   alpha : float
-    Required confidence level, typically this should be 0.95, and must be inside the interval range
-    :math:`(0, 1]`.
+    Required confidence level, typically this should be 0.05, and must be inside the interval range
+    :math:`[0, 1)`.
   predictor : sklearn-like regression object
     An object that has a `fit` and `predict` routine to make predictions.
   callback :
@@ -1053,7 +1053,7 @@ def ztest_stacked_train_load_blockwise(
   estimate :
     Estimate of the difference in means: :math:`\mathbb{E}[x] - \mathbb{E}[y]`.
   ci :
-    Confidence interval (with coverage `alpha`) for the estimate.
+    Confidence interval (with coverage :math:`1 - \alpha`) for the estimate.
   pval :
     The p-value under the null hypothesis H0 that :math:`\mathbb{E}[x] = \mathbb{E}[y]`.
   """
