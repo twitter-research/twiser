@@ -20,6 +20,7 @@ repos:
     -   id: sort-simple-yaml
 -   repo: https://github.com/desbma/black-2spaces
     rev: e9de72c180edf74d7372609c93179954bdd79f11  # pragma: allowlist secret
+    additional_dependencies: ['click@8.0.4']
     hooks:
     -   id: black
         args: [-l 100]
