@@ -7,7 +7,8 @@
 
 """The goal of this package is to make hypothesis testing using variance reduction methods as easy
 as using :func:`scipy.stats.ttest_ind` and :func:`scipy.stats.ttest_ind_from_stats`. A lot of the
-API is designed to match that simplicity as much as possible.
+API is designed to match that simplicity as much as possible. The variance reduction ideas here are
+built on top of the CUPED method ideas in [1]_ and [2]_.
 
 The package currently supports three kinds of tests:
 
@@ -15,7 +16,7 @@ The package currently supports three kinds of tests:
 * cv: This is a held out control variate method (train the predictor on a held out set).
 * stacked: This is a :math:`k`-fold cross validation type setup when training the predictor.
 
-The distinction between basic, cv, and stacked is discussed in [1]_.
+The distinction between basic, cv, and stacked is discussed in [3]_.
 
 Each method has a few different ways to call it:
 
@@ -35,7 +36,15 @@ Every statistical test in this package returns the same set of variables:
 
 References
 ----------
-.. [1] `I. Barr. Reducing the variance of A/B tests using prior information. Degenerate State, Jun
+.. [1] `A. Deng, Y. Xu, R. Kohavi, and T. Walker. Improving the sensitivity of online controlled
+   experiments by utilizing pre-experiment data. In Proceedings of the Sixth ACM International
+   Conference on Web Search and Data Mining, pages 123--132, 2013
+   <https://www.exp-platform.com/Documents/2013-02-CUPED-ImprovingSensitivityOfControlledExperiments.pdf>`_.
+.. [2] `A. Poyarkov, A. Drutsa, A. Khalyavin, G. Gusev, and P. Serdyukov. Boosted decision tree
+   regression adjustment for variance reduction in online controlled experiments. In Proceedings of
+   the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, pages
+   235--244, 2016 <https://www.kdd.org/kdd2016/papers/files/adf0653-poyarkovA.pdf>`_.
+.. [3] `I. Barr. Reducing the variance of A/B tests using prior information. Degenerate State, Jun
    2018
    <https://www.degeneratestate.org/posts/2018/Jan/04/reducing-the-variance-of-ab-test-using-prior-information/>`_.
 """
