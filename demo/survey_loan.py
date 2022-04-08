@@ -87,12 +87,14 @@ na_values = ["-1", "-99", ".", "?"]
 df = pd.read_csv(fname, header=0, index_col=0, na_values=na_values, low_memory=False)
 df = df[cols_to_keep]  # Only keep relvant columns
 df = df.apply(pd.to_numeric, errors="coerce")  # Enforce everything to be float
-df[pre_experiment_cols] = df[pre_experiment_cols].fillna(df[pre_experiment_cols].mean())  # Impute missing features
+interp_val = df[pre_experiment_cols].mean()
+df[pre_experiment_cols] = df[pre_experiment_cols].fillna(interp_val)  # Impute missing features
 
 # Check that was all done correctly
 assert (df.dtypes == float).all()
 assert not df[pre_experiment_cols].isnull().any().any()
-# The current columns should all be in 1--7, this will also catch if any -1 or -99 missing values got through cleaning
+# The current columns should all be in 1--7, this will also catch if any -1 or -99 missing values
+# got through cleaning
 assert not (df < 1).any().any()
 assert not (df > 7).any().any()
 
@@ -128,10 +130,13 @@ predictor = RandomForestRegressor(criterion="squared_error", random_state=0)
 
 
 def show_output(estimate, ci, pval):
-    """Helper function to print the results of the statical tests in TWISER."""
-    (lb, ub) = ci
-    sig_mark = "*" if pval < 0.05 else ""
-    print(f"estimate: {estimate:.2f} in ({lb:.2f}, {ub:.2f}), CI width of {ub - lb:.2f}, p = {pval:.4f}{sig_mark}")
+  """Helper function to print the results of the statical tests in TWISER."""
+  (lb, ub) = ci
+  sig_mark = "*" if pval < 0.05 else ""
+  print(
+    f"estimate: {estimate:.2f} in ({lb:.2f}, {ub:.2f}), "
+    f"CI width of {ub - lb:.2f}, p = {pval:.4f}{sig_mark}"
+  )
 
 
 # ### Basic $z$-test
@@ -146,7 +151,16 @@ show_output(estimate, (lb, ub), pval)
 # Next, we apply variance reduction where the predictor was trained on a held out 30% of the data.
 # This is the easiest to show validity, but some of the added power is lost because not all data is used in the test.
 
-estimate, (lb, ub), pval = twiser.ztest_cv_train(x, x_covariates, y, y_covariates, alpha=0.05, train_frac=0.3, predictor=predictor, random=np.random.RandomState(123))
+estimate, (lb, ub), pval = twiser.ztest_cv_train(
+  x,
+  x_covariates,
+  y,
+  y_covariates,
+  alpha=0.05,
+  train_frac=0.3,
+  predictor=predictor,
+  random=np.random.RandomState(123),
+)
 show_output(estimate, (lb, ub), pval)
 
 # ### Variance reduction with cross validation
@@ -155,7 +169,16 @@ show_output(estimate, (lb, ub), pval)
 # Here, no data is wasted.
 # As we can see it is a more significant result.
 
-estimate, (lb, ub), pval = twiser.ztest_stacked_train(x, x_covariates, y, y_covariates, alpha=0.05, k_fold=10, predictor=predictor, random=np.random.RandomState(123))
+estimate, (lb, ub), pval = twiser.ztest_stacked_train(
+  x,
+  x_covariates,
+  y,
+  y_covariates,
+  alpha=0.05,
+  k_fold=10,
+  predictor=predictor,
+  random=np.random.RandomState(123),
+)
 show_output(estimate, (lb, ub), pval)
 
 # ### Variance reduction in-sample
@@ -164,5 +187,13 @@ show_output(estimate, (lb, ub), pval)
 # This often gives the most power.
 # However, any overfitting in the predictor can also invalidate the results.
 
-estimate, (lb, ub), pval = twiser.ztest_in_sample_train(x, x_covariates, y, y_covariates, alpha=0.05, predictor=predictor, random=np.random.RandomState(123))
+estimate, (lb, ub), pval = twiser.ztest_in_sample_train(
+  x,
+  x_covariates,
+  y,
+  y_covariates,
+  alpha=0.05,
+  predictor=predictor,
+  random=np.random.RandomState(123),
+)
 show_output(estimate, (lb, ub), pval)
