@@ -559,7 +559,8 @@ def ztest_cv_train(
     If ``True`` perform a health check that ensures the predictions have the same distribution in
     treatment and control. If not, issue a warning.
   predictor : sklearn-like regression object
-    An object that has a `fit` and `predict` routine to make predictions.
+    An object that has a `fit` and `predict` routine to make predictions. The object does not need
+    to be fit yet. It will be fit in this method.
   random : :class:`numpy:numpy.random.RandomState`
     An optional numpy random stream can be passed in for reproducibility.
   ddof : int
@@ -658,7 +659,8 @@ def ztest_in_sample_train(
     If ``True`` perform a health check that ensures the predictions have the same distribution in
     treatment and control. If not, issue a warning.
   predictor : sklearn-like regression object
-    An object that has a `fit` and `predict` routine to make predictions.
+    An object that has a `fit` and `predict` routine to make predictions. The object does not need
+    to be fit yet. It will be fit in this method.
   random : :class:`numpy:numpy.random.RandomState`
     An optional numpy random stream can be passed in for reproducibility.
   ddof : int
@@ -888,7 +890,8 @@ def ztest_stacked_train(
     If ``True`` perform a health check that ensures the predictions have the same distribution in
     treatment and control. If not, issue a warning.
   predictor : sklearn-like regression object
-    An object that has a `fit` and `predict` routine to make predictions.
+    An object that has a `fit` and `predict` routine to make predictions. The object does not need
+    to be fit yet. It will be fit in this method.
   random : :class:`numpy:numpy.random.RandomState`
     An optional numpy random stream can be passed in for reproducibility.
 
@@ -976,7 +979,8 @@ def ztest_stacked_train_blockwise(
     If ``True`` perform a health check that ensures the predictions have the same distribution in
     treatment and control. If not, issue a warning.
   predictor : sklearn-like regression object
-    An object that has a `fit` and `predict` routine to make predictions.
+    An object that has a `fit` and `predict` routine to make predictions. The object does not need
+    to be fit yet. It will be fit in this method.
   random : :class:`numpy:numpy.random.RandomState`
     An optional numpy random stream can be passed in for reproducibility.
 
@@ -1052,7 +1056,8 @@ def ztest_stacked_train_load_blockwise(
     Required confidence level, typically this should be 0.05, and must be inside the interval range
     :math:`[0, 1)`.
   predictor : sklearn-like regression object
-    An object that has a `fit` and `predict` routine to make predictions.
+    An object that has a `fit` and `predict` routine to make predictions. The object does not need
+    to be fit yet. It will be fit in this method.
   callback :
     An optional callback that gets called for each cross validation fold in the format
     ``callback(predictor)``. This is sometimes useful for logging.
