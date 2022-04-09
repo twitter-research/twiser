@@ -2,7 +2,7 @@
 Getting Started
 ***************
 
-Advanced variance reduction methods.
+Advanced variance reduction methods supporting the publication [1]_.
 
 Installation
 ============
@@ -39,15 +39,17 @@ Installable from `PyPI <https://pypi.org/project/twiser/>`_.
 References
 ==========
 
-.. [1] `A. Deng, Y. Xu, R. Kohavi, and T. Walker. Improving the sensitivity of online controlled
+.. [1] R. Turner, U. Pavalanathan, S. Webb, N. Hammerla, B. Cohn, and A. Fu. Isotonic regression
+   adjustment for variance reduction. In CODE@MIT, 2021.
+.. [2] `A. Deng, Y. Xu, R. Kohavi, and T. Walker. Improving the sensitivity of online controlled
    experiments by utilizing pre-experiment data. In Proceedings of the Sixth ACM International
    Conference on Web Search and Data Mining, pages 123--132, 2013
    <https://www.exp-platform.com/Documents/2013-02-CUPED-ImprovingSensitivityOfControlledExperiments.pdf>`_.
-.. [2] `A. Poyarkov, A. Drutsa, A. Khalyavin, G. Gusev, and P. Serdyukov. Boosted decision tree
+.. [3] `A. Poyarkov, A. Drutsa, A. Khalyavin, G. Gusev, and P. Serdyukov. Boosted decision tree
    regression adjustment for variance reduction in online controlled experiments. In Proceedings of
    the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, pages
    235--244, 2016 <https://www.kdd.org/kdd2016/papers/files/adf0653-poyarkovA.pdf>`_.
-.. [3] `I. Barr. Reducing the variance of A/B tests using prior information. Degenerate State, Jun
+.. [4] `I. Barr. Reducing the variance of A/B tests using prior information. Degenerate State, Jun
    2018
    <https://www.degeneratestate.org/posts/2018/Jan/04/reducing-the-variance-of-ab-test-using-prior-information/>`_.
 
