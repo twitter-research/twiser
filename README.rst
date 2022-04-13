@@ -131,6 +131,13 @@ overfitting in the predictor can also invalidate the results.
 
     ATE estimate: 0.86 in (0.24, 1.49), CI width of 1.24, p = 0.0065*
 
+Other interfaces
+----------------
+
+It is also possible to call these methods using raw control predictions instead of training the predictor in the Twiser method.
+It also supports a sufficient statistics interface for working with large datasets.
+See the `documentation <https://twiser.readthedocs.io/en/latest/>`_ for details.
+
 Support
 =======
 
