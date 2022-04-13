@@ -1042,8 +1042,8 @@ def ztest_cross_val_train_load_blockwise(
   callback: Optional[Callable[[Model], None]] = None,
 ) -> TestResult:
   r"""Version of :func:`ztest_cross_val_train_blockwise` that loads the data in blocks to avoid
-  overflowing memory. Using :func:`ztest_cross_val_train_blockwise` is faster if all the data fits in
-  memory.
+  overflowing memory. Using :func:`ztest_cross_val_train_blockwise` is faster if all the data fits
+  in memory.
 
   Parameters
   ----------

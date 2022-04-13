@@ -546,7 +546,9 @@ def test_ztest_cross_val_train_null(nobs1, nobs2, std1, std2, shift1, gu_params,
   alphas,
   seeds,
 )
-def test_ztest_cross_val_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_params, alpha, seed):
+def test_ztest_cross_val_train_alt(
+  nobs1, nobs2, std1, std2, shift1, shift2, gu_params, alpha, seed
+):
   runs = RUNS
   random = np.random.RandomState(seed)
 
