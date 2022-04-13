@@ -23,15 +23,15 @@ Example Usage
 A full demo notebook of the package is given in ``demo/survey_loan.ipynb``.
 Here is a snippet of the different methods from the notebook:
 
-Setup a predictor as a variate
-------------------------------
+Setup a predictor as a control variate
+--------------------------------------
 
 First, we need to define a regression model.
 We can use anything that fits the sklearn idiom of ``fit`` and ``predict`` methods.
 This predictor is used to take the :math:`n \times d` array of treatment unit covariates ``x_covariates`` and predict the treatment outcomes :math:`n`-length outcome array ``x``.
 Likewise, it makes predictions from the :math:`m \times d` array of control unit covariates ``y_covariates`` to the control :math:`m`-length outcome array ``y``.
 
-.. code:: ipython3
+.. code:: python3
 
     predictor = RandomForestRegressor(criterion="squared_error", random_state=0)
 
@@ -41,7 +41,7 @@ Basic :math:`z`-test
 First, we apply the basic two-sample :math:`z`-test included in Twiser.
 This works basically the same as ``scipy.stats.ttest_ind``.
 
-.. code:: ipython3
+.. code:: python3
 
     estimate, (lb, ub), pval = twiser.ztest(x, y, alpha=0.05)
     show_output(estimate, (lb, ub), pval)
@@ -59,7 +59,7 @@ Next, we apply variance reduction where the predictor was trained on a
 held out 30% of the data. This is the easiest to show validity, but some
 of the added power is lost because not all data is used in the test.
 
-.. code:: ipython3
+.. code:: python3
 
     estimate, (lb, ub), pval = twiser.ztest_held_out_train(
       x,
@@ -86,7 +86,7 @@ To be more statistically efficient we train and predict using 10-fold
 cross validation. Here, no data is wasted. As we can see it is a more
 significant result.
 
-.. code:: ipython3
+.. code:: python3
 
     estimate, (lb, ub), pval = twiser.ztest_cross_val_train(
       x,
@@ -113,7 +113,7 @@ In the literature it is popular to train the predictor in the same
 sample as the test. This often gives the most power. However, any
 overfitting in the predictor can also invalidate the results.
 
-.. code:: ipython3
+.. code:: python3
 
     estimate, (lb, ub), pval = twiser.ztest_in_sample_train(
       x,
