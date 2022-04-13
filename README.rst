@@ -26,7 +26,7 @@ Here is a snippet of the different methods from the notebook:
 Basic :math:`z`-test
 --------------------
 
-First, we apply the basic two-sample :math:`z`-test included in twiser.
+First, we apply the basic two-sample :math:`z`-test included in Twiser.
 This works basically the same as ``scipy.stats.ttest_ind``.
 
 .. code:: ipython3
@@ -49,7 +49,7 @@ of the added power is lost because not all data is used in the test.
 
 .. code:: ipython3
 
-    estimate, (lb, ub), pval = twiser.ztest_cv_train(
+    estimate, (lb, ub), pval = twiser.ztest_held_out_train(
       x,
       x_covariates,
       y,
@@ -76,7 +76,7 @@ significant result.
 
 .. code:: ipython3
 
-    estimate, (lb, ub), pval = twiser.ztest_stacked_train(
+    estimate, (lb, ub), pval = twiser.ztest_cross_val_train(
       x,
       x_covariates,
       y,
