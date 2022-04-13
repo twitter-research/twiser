@@ -28,7 +28,7 @@ setup(
   author_email=("rdturnermtl@github.com"),
   license="Apache v2",
   description="Advanced variance reduction methods.",
-  python_requires=">=3.6",
+  python_requires=">=3.7",
   install_requires=requirements,
   extras_require={"test": test_requirements},
   long_description=long_description,
