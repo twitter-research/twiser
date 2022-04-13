@@ -14,7 +14,7 @@ The package currently supports three kinds of tests:
 * held out: This is a held out control variate method (train the predictor on a held out set).
 * cross val: This is a :math:`k`-fold cross validation type setup when training the predictor.
 
-The distinction between basic, held out, and cross val is discussed in [4]_.
+The distinction between basic, held out (aka cv), and cross val (aka stacked) is discussed in [4]_.
 
 Each method has a few different ways to call it:
 
