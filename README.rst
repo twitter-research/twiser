@@ -23,6 +23,18 @@ Example Usage
 A full demo notebook of the package is given in ``demo/survey_loan.ipynb``.
 Here is a snippet of the different methods from the notebook:
 
+Setup a predictor as a variate
+------------------------------
+
+First, we need to define a regression model.
+We can use anything that fits the sklearn idiom of ``fit`` and ``predict`` methods.
+This predictor is used to take the :math:`n \times d` array of treatment unit covariates ``x_covariates`` and predict the treatment outcomes :math:`n`-length outcome array ``x``.
+Likewise, it makes predictions from the :math:`m \times d` array of control unit covariates ``y_covariates`` to the control :math:`m`-length outcome array ``y``.
+
+.. code:: ipython3
+
+    predictor = RandomForestRegressor(criterion="squared_error", random_state=0)
+
 Basic :math:`z`-test
 --------------------
 
