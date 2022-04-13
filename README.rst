@@ -28,8 +28,8 @@ Setup a predictor as a control variate
 
 First, we need to define a regression model.
 We can use anything that fits the sklearn idiom of ``fit`` and ``predict`` methods.
-This predictor is used to take the :math:`n \times d` array of treatment unit covariates ``x_covariates`` and predict the treatment outcomes :math:`n`-length outcome array ``x``.
-Likewise, it makes predictions from the :math:`m \times d` array of control unit covariates ``y_covariates`` to the control :math:`m`-length outcome array ``y``.
+This predictor is used to take the ``n x d`` array of treatment unit covariates ``x_covariates`` and predict the treatment outcomes ``n``-length outcome array ``x``.
+Likewise, it makes predictions from the ``m x d`` array of control unit covariates ``y_covariates`` to the control ``m``-length outcome array ``y``.
 
 .. code:: python3
 
