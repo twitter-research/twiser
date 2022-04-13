@@ -35,10 +35,10 @@ Likewise, it makes predictions from the ``m x d`` array of control unit covariat
 
     predictor = RandomForestRegressor(criterion="squared_error", random_state=0)
 
-Basic :math:`z`-test
+Basic z-test
 --------------------
 
-First, we apply the basic two-sample :math:`z`-test included in Twiser.
+First, we apply the basic two-sample z-test included in Twiser.
 This works basically the same as ``scipy.stats.ttest_ind``.
 
 .. code:: python3
