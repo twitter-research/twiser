@@ -155,8 +155,9 @@ Installable from `PyPI <https://pypi.org/project/twiser/>`_.
 References
 ==========
 
-.. [1] R. Turner, U. Pavalanathan, S. Webb, N. Hammerla, B. Cohn, and A. Fu. Isotonic regression
-   adjustment for variance reduction. In CODE@MIT, 2021.
+.. [1] `R. Turner, U. Pavalanathan, S. Webb, N. Hammerla, B. Cohn, and A. Fu. Isotonic regression
+   adjustment for variance reduction. In CODE@MIT, 2021
+   <https://ide.mit.edu/events/2021-conference-on-digital-experimentation-mit-codemit/>`_.
 .. [2] `A. Deng, Y. Xu, R. Kohavi, and T. Walker. Improving the sensitivity of online controlled
    experiments by utilizing pre-experiment data. In Proceedings of the Sixth ACM International
    Conference on Web Search and Data Mining, pages 123--132, 2013
