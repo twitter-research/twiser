@@ -15,10 +15,10 @@ built on top of the CUPED method ideas in [2]_ and [3]_.
 The package currently supports three kinds of tests:
 
 * basic :math:`z`-test: This is the one from the intro stats textbooks.
-* cv: This is a held out control variate method (train the predictor on a held out set).
+* held out: This is a held out control variate method (train the predictor on a held out set).
 * stacked: This is a :math:`k`-fold cross validation type setup when training the predictor.
 
-The distinction between basic, cv, and stacked is discussed in [4]_.
+The distinction between basic, held out, and stacked is discussed in [4]_.
 
 Each method has a few different ways to call it:
 
@@ -411,7 +411,7 @@ def _make_train_idx(frac: float, n: int, random: Rng = np_random) -> np.ndarray:
   return train_idx
 
 
-def ztest_cv_from_stats(
+def ztest_held_out_from_stats(
   mean1: npt.ArrayLike,
   cov1: npt.ArrayLike,
   nobs1: int,
@@ -421,7 +421,7 @@ def ztest_cv_from_stats(
   *,
   alpha: float = ALPHA,
 ) -> TestResult:
-  r"""Version of :func:`ztest_cv` that works off the sufficient statistics of the data.
+  r"""Version of :func:`ztest_held_out` that works off the sufficient statistics of the data.
 
   Parameters
   ----------
@@ -461,7 +461,7 @@ def ztest_cv_from_stats(
   return R
 
 
-def ztest_cv(
+def ztest_held_out(
   x: npt.ArrayLike,
   xp: npt.ArrayLike,
   y: npt.ArrayLike,
@@ -471,7 +471,7 @@ def ztest_cv(
   health_check_output: bool = True,
   ddof: int = 1,
 ) -> TestResult:
-  r"""Two-sample unpaired :math:`z`-test with variance reduction using control variarates (CV). It
+  r"""Two-sample unpaired :math:`z`-test with variance reduction using control variarates. It
   does not assume equal sample sizes or variances.
 
   The predictions (control variates) must be derived from features that are independent of
@@ -518,7 +518,7 @@ def ztest_cv(
   return R
 
 
-def ztest_cv_train(
+def ztest_held_out_train(
   x: npt.ArrayLike,
   x_covariates: npt.ArrayLike,
   y: npt.ArrayLike,
@@ -532,7 +532,7 @@ def ztest_cv_train(
   random: Rng = None,
   ddof: int = 1,
 ) -> TestResult:
-  r"""Version of :func:`ztest_cv` that also trains the control variate predictor.
+  r"""Version of :func:`ztest_held_out` that also trains the control variate predictor.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
   in treatment and control have a different distribution then the test may be invalid.
@@ -611,7 +611,7 @@ def ztest_cv_train(
   yp = predictor.predict(y_covariates[~train_idx_y, :])
   assert np.all(np.isfinite(yp))
 
-  R = ztest_cv(
+  R = ztest_held_out(
     x[~train_idx_x],
     xp,
     y[~train_idx_y],
@@ -636,7 +636,7 @@ def ztest_in_sample_train(
   random: Rng = None,
   ddof: int = 1,
 ) -> TestResult:
-  r"""Version of :func:`ztest_cv` that also trains the control variate predictor.
+  r"""Version of :func:`ztest_held_out` that also trains the control variate predictor.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
   in treatment and control have a different distribution then the test may be invalid.
@@ -703,7 +703,7 @@ def ztest_in_sample_train(
   yp = predictor.predict(y_covariates)
   assert np.all(np.isfinite(yp))
 
-  R = ztest_cv(x, xp, y, yp, alpha=alpha, ddof=ddof, health_check_output=health_check_output)
+  R = ztest_held_out(x, xp, y, yp, alpha=alpha, ddof=ddof, health_check_output=health_check_output)
   return R
 
 
@@ -791,7 +791,7 @@ def ztest_stacked_from_stats(
 
   mean1, cov1, nobs1 = _pool_moments(mean1, cov1, nobs1)
   mean2, cov2, nobs2 = _pool_moments(mean2, cov2, nobs2)
-  R = ztest_cv_from_stats(mean1, cov1, nobs1, mean2, cov2, nobs2, alpha=alpha)
+  R = ztest_held_out_from_stats(mean1, cov1, nobs1, mean2, cov2, nobs2, alpha=alpha)
   return R
 
 
@@ -807,7 +807,7 @@ def ztest_stacked(
   health_check_output: bool = True,
 ) -> TestResult:
   r"""Two-sample unpaired :math:`z`-test with variance reduction using the *stacked* control
-  variarates (CV) method. It does not assume equal sample sizes or variances.
+  variarates method. It does not assume equal sample sizes or variances.
 
   The predictions (control variates) must be derived from features that are independent of
   assignment to treatment or control. If the predictions in treatment and control have a different
@@ -848,7 +848,7 @@ def ztest_stacked(
   _validate_alpha(alpha)
 
   # Current method ignores fold index => we won't validate for now
-  R = ztest_cv(x, xp, y, yp, alpha=alpha, ddof=0, health_check_output=health_check_output)
+  R = ztest_held_out(x, xp, y, yp, alpha=alpha, ddof=0, health_check_output=health_check_output)
   return R
 
 

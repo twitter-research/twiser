@@ -159,19 +159,19 @@ def test_make_train_idx(frac, n, seed):
 
 
 @given(data_vector_pairs_2, data_vector_pairs_2, alphas, ddofs)
-def test_ztest_cv_from_stats(xx, yy, alpha, ddof):
+def test_ztest_held_out_from_stats(xx, yy, alpha, ddof):
   (x, xp) = xx
   (y, yp) = yy
 
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate, (lb, ub), pval = twiser.ztest_cv(x, xp, y, yp, alpha=alpha, ddof=ddof)
+    estimate, (lb, ub), pval = twiser.ztest_held_out(x, xp, y, yp, alpha=alpha, ddof=ddof)
 
   mean1 = np.mean(xx, axis=1)
   cov1 = np.cov(xx, ddof=ddof)
   mean2 = np.mean(yy, axis=1)
   cov2 = np.cov(yy, ddof=ddof)
-  estimate_, (lb_, ub_), pval_ = twiser.ztest_cv_from_stats(
+  estimate_, (lb_, ub_), pval_ = twiser.ztest_held_out_from_stats(
     mean1, cov1, len(x), mean2, cov2, len(y), alpha=alpha
   )
 
@@ -182,27 +182,27 @@ def test_ztest_cv_from_stats(xx, yy, alpha, ddof):
 
 
 @given(data_vector_pairs_2, data_vector_pairs_2, alphas, ddofs)
-def test_ztest_cv_coherence(x, y, alpha, ddof):
+def test_ztest_held_out_coherence(x, y, alpha, ddof):
   (x, xp) = x
   (y, yp) = y
 
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    general_hyp_tester(twiser.ztest_cv, alpha, x, xp, y, yp, ddof=ddof)
+    general_hyp_tester(twiser.ztest_held_out, alpha, x, xp, y, yp, ddof=ddof)
 
 
 @given(data_vector_pairs_2_int, data_vector_pairs_2_int, alphas, ddofs)
-def test_ztest_cv_dtypes(x, y, alpha, ddof):
+def test_ztest_held_out_dtypes(x, y, alpha, ddof):
   (x, xp) = x
   (y, yp) = y
 
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    general_float_test(twiser.ztest_cv, x, xp, y, yp, alpha=alpha, ddof=ddof)
+    general_float_test(twiser.ztest_held_out, x, xp, y, yp, alpha=alpha, ddof=ddof)
 
 
 @given(data_vector_pairs_4, data_vector_pairs_4, alphas, seeds, train_fracs, ddofs)
-def test_ztest_cv_train(xx, yy, alpha, seed, train_frac, ddof):
+def test_ztest_held_out_train(xx, yy, alpha, seed, train_frac, ddof):
   (x, xp) = xx
   (y, yp) = yy
 
@@ -212,14 +212,14 @@ def test_ztest_cv_train(xx, yy, alpha, seed, train_frac, ddof):
 
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate, (lb, ub), pval = twiser.ztest_cv(
+    estimate, (lb, ub), pval = twiser.ztest_held_out(
       x[~train_idx_x], xp[~train_idx_x], y[~train_idx_y], yp[~train_idx_y], alpha=alpha, ddof=ddof
     )
 
   random = np.random.RandomState(seed)
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate_, (lb_, ub_), pval_ = twiser.ztest_cv_train(
+    estimate_, (lb_, ub_), pval_ = twiser.ztest_held_out_train(
       x, xp[:, None], y, yp[:, None], alpha=alpha, train_frac=train_frac, random=random, ddof=ddof
     )
 
