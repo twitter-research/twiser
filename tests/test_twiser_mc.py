@@ -494,7 +494,7 @@ def test_ztest_held_out_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_p
   alphas,
   seeds,
 )
-def test_ztest_stacked_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, alpha, seed):
+def test_ztest_cross_val_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, alpha, seed):
   runs = RUNS
   random = np.random.RandomState(seed)
 
@@ -522,7 +522,7 @@ def test_ztest_stacked_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, a
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    R = twiser.ztest_stacked_train(
+    R = twiser.ztest_cross_val_train(
       x1, input1, x2, input2, alpha=alpha, predictor=predictor, random=random
     )
     results_list.append(R)
@@ -546,7 +546,7 @@ def test_ztest_stacked_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, a
   alphas,
   seeds,
 )
-def test_ztest_stacked_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_params, alpha, seed):
+def test_ztest_cross_val_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_params, alpha, seed):
   runs = RUNS
   random = np.random.RandomState(seed)
 
@@ -574,7 +574,7 @@ def test_ztest_stacked_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_pa
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    R = twiser.ztest_stacked_train(
+    R = twiser.ztest_cross_val_train(
       x1, input1, x2, input2, alpha=alpha, predictor=predictor, random=random
     )
     results_list.append(R)
@@ -597,7 +597,7 @@ def test_ztest_stacked_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_pa
   alphas,
   seeds,
 )
-def test_ztest_stacked_train_blockwise_null(
+def test_ztest_cross_val_train_blockwise_null(
   nobs1, nobs2, std1, std2, shift1, gu_params, alpha, seed
 ):
   runs = RUNS
@@ -627,7 +627,7 @@ def test_ztest_stacked_train_blockwise_null(
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    R = twiser.ztest_stacked_train_blockwise(
+    R = twiser.ztest_cross_val_train_blockwise(
       x1, input1, x2, input2, alpha=alpha, predictor=predictor, random=random
     )
     results_list.append(R)
@@ -651,7 +651,7 @@ def test_ztest_stacked_train_blockwise_null(
   alphas,
   seeds,
 )
-def test_ztest_stacked_train_blockwise_alt(
+def test_ztest_cross_val_train_blockwise_alt(
   nobs1, nobs2, std1, std2, shift1, shift2, gu_params, alpha, seed
 ):
   runs = RUNS
@@ -681,7 +681,7 @@ def test_ztest_stacked_train_blockwise_alt(
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    R = twiser.ztest_stacked_train_blockwise(
+    R = twiser.ztest_cross_val_train_blockwise(
       x1, input1, x2, input2, alpha=alpha, predictor=predictor, random=random
     )
     results_list.append(R)

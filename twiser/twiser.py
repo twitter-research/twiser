@@ -1,10 +1,6 @@
 # Copyright 2021 Twitter, Inc.
 # SPDX-License-Identifier: Apache-2.0
 
-# TODO
-# review func names
-# order the funcs for what we want to see in docs
-
 """The goal of this package is to make hypothesis testing using variance reduction methods as easy
 as using :func:`scipy.stats.ttest_ind` and :func:`scipy.stats.ttest_ind_from_stats`. A lot of the
 API is designed to match that simplicity as much as possible.
@@ -16,9 +12,9 @@ The package currently supports three kinds of tests:
 
 * basic :math:`z`-test: This is the one from the intro stats textbooks.
 * held out: This is a held out control variate method (train the predictor on a held out set).
-* stacked: This is a :math:`k`-fold cross validation type setup when training the predictor.
+* cross val: This is a :math:`k`-fold cross validation type setup when training the predictor.
 
-The distinction between basic, held out, and stacked is discussed in [4]_.
+The distinction between basic, held out, and cross val is discussed in [4]_.
 
 Each method has a few different ways to call it:
 
@@ -707,7 +703,7 @@ def ztest_in_sample_train(
   return R
 
 
-# ==== Implement Stacked version ====
+# ==== Implement cross val version ====
 
 
 def _pool_moments(
@@ -741,7 +737,7 @@ def _fold_idx(n: int, k: int, random: Rng = np_random) -> np.ndarray:
   return idx
 
 
-def ztest_stacked_from_stats(
+def ztest_cross_val_from_stats(
   mean1: npt.ArrayLike,
   cov1: npt.ArrayLike,
   nobs1: npt.ArrayLike,
@@ -751,7 +747,7 @@ def ztest_stacked_from_stats(
   *,
   alpha: float = ALPHA,
 ) -> TestResult:
-  r"""Version of :func:`ztest_stacked` that works off the sufficient statistics of the data.
+  r"""Version of :func:`ztest_cross_val` that works off the sufficient statistics of the data.
 
   Parameters
   ----------
@@ -795,7 +791,7 @@ def ztest_stacked_from_stats(
   return R
 
 
-def ztest_stacked(
+def ztest_cross_val(
   x: npt.ArrayLike,
   xp: npt.ArrayLike,
   x_fold: npt.ArrayLike,
@@ -806,7 +802,7 @@ def ztest_stacked(
   alpha: float = ALPHA,
   health_check_output: bool = True,
 ) -> TestResult:
-  r"""Two-sample unpaired :math:`z`-test with variance reduction using the *stacked* control
+  r"""Two-sample unpaired :math:`z`-test with variance reduction using the cross validated control
   variarates method. It does not assume equal sample sizes or variances.
 
   The predictions (control variates) must be derived from features that are independent of
@@ -852,7 +848,7 @@ def ztest_stacked(
   return R
 
 
-def ztest_stacked_train(
+def ztest_cross_val_train(
   x: npt.ArrayLike,
   x_covariates: npt.ArrayLike,
   y: npt.ArrayLike,
@@ -865,7 +861,7 @@ def ztest_stacked_train(
   predictor: Model = None,
   random: Rng = None,
 ) -> TestResult:
-  r"""Version of :func:`ztest_stacked` that also trains the control variate predictor.
+  r"""Version of :func:`ztest_cross_val` that also trains the control variate predictor.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
   in treatment and control have a different distribution then the test may be invalid.
@@ -937,13 +933,13 @@ def ztest_stacked_train(
     xp[fold_idx_x == kk] = predictor.predict(x_covariates[fold_idx_x == kk])
     yp[fold_idx_y == kk] = predictor.predict(y_covariates[fold_idx_y == kk])
 
-  R = ztest_stacked(
+  R = ztest_cross_val(
     x, xp, fold_idx_x, y, yp, fold_idx_y, alpha=alpha, health_check_output=health_check_output
   )
   return R
 
 
-def ztest_stacked_train_blockwise(
+def ztest_cross_val_train_blockwise(
   x: npt.ArrayLike,
   x_covariates: npt.ArrayLike,
   y: npt.ArrayLike,
@@ -956,7 +952,7 @@ def ztest_stacked_train_blockwise(
   predictor: Model = None,
   random: Rng = None,
 ) -> TestResult:
-  r"""Version of :func:`ztest_stacked_train` that is more efficient if the fit routine scales worse
+  r"""Version of :func:`ztest_cross_val_train` that is more efficient if the fit routine scales worse
   than O(N), otherwise this will not be more efficient.
 
   Parameters
@@ -1032,21 +1028,21 @@ def ztest_stacked_train_blockwise(
   xp = np.nanmean(xp, axis=1)
   yp = np.nanmean(yp, axis=1)
 
-  R = ztest_stacked(
+  R = ztest_cross_val(
     x, xp, fold_idx_x, y, yp, fold_idx_y, alpha=alpha, health_check_output=health_check_output
   )
   return R
 
 
-def ztest_stacked_train_load_blockwise(
+def ztest_cross_val_train_load_blockwise(
   data_iter: Sequence[DataGen],
   *,
   alpha: float = ALPHA,
   predictor: Model = None,
   callback: Optional[Callable[[Model], None]] = None,
 ) -> TestResult:
-  r"""Version of :func:`ztest_stacked_train_blockwise` that loads the data in blocks to avoid
-  overflowing memory. Using :func:`ztest_stacked_train_blockwise` is faster if all the data fits in
+  r"""Version of :func:`ztest_cross_val_train_blockwise` that loads the data in blocks to avoid
+  overflowing memory. Using :func:`ztest_cross_val_train_blockwise` is faster if all the data fits in
   memory.
 
   Parameters
@@ -1054,7 +1050,7 @@ def ztest_stacked_train_load_blockwise(
   data_iter : Sequence[Callable[[], Tuple[ndarray, ndarray, ndarray, ndarray]]]
     An iterable of functions, where each function returns a different cross validation fold. The
     functions should return data in the format of a tuple: ``(x, x_covariates, y, y_covariates)``.
-    See the parameters of :func:`ztest_stacked_train_blockwise` for details on the shapes of these
+    See the parameters of :func:`ztest_cross_val_train_blockwise` for details on the shapes of these
     variables.
   alpha : float
     Required confidence level, typically this should be 0.05, and must be inside the interval range
@@ -1140,5 +1136,5 @@ def ztest_stacked_train_load_blockwise(
     mean2[kk, 1] = np.mean(yp)
     cov2[kk, :, :] = np.cov((y, yp), ddof=0)
     nobs2[kk] = n_y
-  R = ztest_stacked_from_stats(mean1, cov1, nobs1, mean2, cov2, nobs2, alpha=alpha)
+  R = ztest_cross_val_from_stats(mean1, cov1, nobs1, mean2, cov2, nobs2, alpha=alpha)
   return R

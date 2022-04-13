@@ -279,7 +279,7 @@ def test_fold_idx(n, k, seed):
 
 
 @given(data_vector_pairs_4, data_vector_pairs_4, alphas, folds, seeds)
-def test_ztest_stacked_from_stats(xx, yy, alpha, k_fold, seed):
+def test_ztest_cross_val_from_stats(xx, yy, alpha, k_fold, seed):
   (x, xp) = xx
   (y, yp) = yy
 
@@ -308,9 +308,9 @@ def test_ztest_stacked_from_stats(xx, yy, alpha, k_fold, seed):
 
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate, (lb, ub), pval = twiser.ztest_stacked(x, xp, fx, y, yp, fy, alpha=alpha)
+    estimate, (lb, ub), pval = twiser.ztest_cross_val(x, xp, fx, y, yp, fy, alpha=alpha)
 
-  estimate_, (lb_, ub_), pval_ = twiser.ztest_stacked_from_stats(
+  estimate_, (lb_, ub_), pval_ = twiser.ztest_cross_val_from_stats(
     mean_x, cov_x, nobs_x, mean_y, cov_y, nobs_y, alpha=alpha
   )
 
@@ -321,7 +321,7 @@ def test_ztest_stacked_from_stats(xx, yy, alpha, k_fold, seed):
 
 
 @given(data_vector_pairs_2, data_vector_pairs_2, alphas, folds, seeds)
-def test_ztest_stacked_coherence(x, y, alpha, k_fold, seed):
+def test_ztest_cross_val_coherence(x, y, alpha, k_fold, seed):
   (x, xp) = x
   (y, yp) = y
 
@@ -334,11 +334,11 @@ def test_ztest_stacked_coherence(x, y, alpha, k_fold, seed):
 
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    general_hyp_tester(twiser.ztest_stacked, alpha, x, xp, fx, y, yp, fy)
+    general_hyp_tester(twiser.ztest_cross_val, alpha, x, xp, fx, y, yp, fy)
 
 
 @given(data_vector_pairs_2_int, data_vector_pairs_2_int, alphas, folds, seeds)
-def test_ztest_stacked_dtypes(x, y, alpha, k_fold, seed):
+def test_ztest_cross_val_dtypes(x, y, alpha, k_fold, seed):
   (x, xp) = x
   (y, yp) = y
 
@@ -351,26 +351,26 @@ def test_ztest_stacked_dtypes(x, y, alpha, k_fold, seed):
 
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    general_float_test(twiser.ztest_stacked, x, xp, fx, y, yp, fy, alpha=alpha)
+    general_float_test(twiser.ztest_cross_val, x, xp, fx, y, yp, fy, alpha=alpha)
 
 
 @given(data_vector_pairs_4, data_vector_pairs_4, alphas, folds, seeds)
-def test_ztest_stacked_train(xx, yy, alpha, k_fold, seed):
+def test_ztest_cross_val_train(xx, yy, alpha, k_fold, seed):
   (x, xp) = xx
   (y, yp) = yy
 
   assume(len(x) >= twiser.MIN_SPLIT * k_fold)
   assume(len(y) >= twiser.MIN_SPLIT * k_fold)
 
-  # Right now fold idx is not used by stacked estimator so we can pass in None, but might change
+  # Right now fold idx is not used by cross val estimator so we can pass in None, but might change
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate, (lb, ub), pval = twiser.ztest_stacked(x, xp, None, y, yp, None, alpha=alpha)
+    estimate, (lb, ub), pval = twiser.ztest_cross_val(x, xp, None, y, yp, None, alpha=alpha)
 
   random = np.random.RandomState(seed)
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate_, (lb_, ub_), pval_ = twiser.ztest_stacked_train(
+    estimate_, (lb_, ub_), pval_ = twiser.ztest_cross_val_train(
       x, xp[:, None], y, yp[:, None], alpha=alpha, k_fold=k_fold, random=random
     )
 
@@ -381,22 +381,22 @@ def test_ztest_stacked_train(xx, yy, alpha, k_fold, seed):
 
 
 @given(data_vector_pairs_4, data_vector_pairs_4, alphas, folds, seeds)
-def test_ztest_stacked_train_blockwise(xx, yy, alpha, k_fold, seed):
+def test_ztest_cross_val_train_blockwise(xx, yy, alpha, k_fold, seed):
   (x, xp) = xx
   (y, yp) = yy
 
   assume(len(x) >= twiser.MIN_SPLIT * k_fold)
   assume(len(y) >= twiser.MIN_SPLIT * k_fold)
 
-  # Right now fold idx is not used by stacked estimator so we can pass in None, but might change
+  # Right now fold idx is not used by cross val estimator so we can pass in None, but might change
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate, (lb, ub), pval = twiser.ztest_stacked(x, xp, None, y, yp, None, alpha=alpha)
+    estimate, (lb, ub), pval = twiser.ztest_cross_val(x, xp, None, y, yp, None, alpha=alpha)
 
   random = np.random.RandomState(seed)
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate_, (lb_, ub_), pval_ = twiser.ztest_stacked_train_blockwise(
+    estimate_, (lb_, ub_), pval_ = twiser.ztest_cross_val_train_blockwise(
       x, xp[:, None], y, yp[:, None], alpha=alpha, k_fold=k_fold, random=random
     )
 
@@ -418,7 +418,7 @@ def test_ztest_stacked_train_blockwise(xx, yy, alpha, k_fold, seed):
   folds,
   seeds,
 )
-def test_ztest_stacked_train_to_raw(data, alpha, k_fold, seed):
+def test_ztest_cross_val_train_to_raw(data, alpha, k_fold, seed):
   (x, x_covariates, y, y_covariates) = data
 
   n_x = len(x)
@@ -456,14 +456,14 @@ def test_ztest_stacked_train_to_raw(data, alpha, k_fold, seed):
 
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate, (lb, ub), pval = twiser.ztest_stacked(
+    estimate, (lb, ub), pval = twiser.ztest_cross_val(
       xx, xp, fold_idx_x, yy, yp, fold_idx_y, alpha=alpha
     )
 
   random = np.random.RandomState(seed)
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate_, (lb_, ub_), pval_ = twiser.ztest_stacked_train(
+    estimate_, (lb_, ub_), pval_ = twiser.ztest_cross_val_train(
       x,
       x_covariates,
       y,
@@ -492,7 +492,7 @@ def test_ztest_stacked_train_to_raw(data, alpha, k_fold, seed):
   folds,
   seeds,
 )
-def test_ztest_stacked_train_to_from_stats(data, alpha, k_fold, seed):
+def test_ztest_cross_val_train_to_from_stats(data, alpha, k_fold, seed):
   (x, x_covariates, y, y_covariates) = data
 
   n_x = len(x)
@@ -534,14 +534,14 @@ def test_ztest_stacked_train_to_from_stats(data, alpha, k_fold, seed):
     cov2[kk, :, :] = np.cov((y_kk, yp), ddof=0)
     nobs2[kk] = np.sum(fold_idx_y == kk)
 
-  estimate, (lb, ub), pval = twiser.ztest_stacked_from_stats(
+  estimate, (lb, ub), pval = twiser.ztest_cross_val_from_stats(
     mean1, cov1, nobs1, mean2, cov2, nobs2, alpha=alpha
   )
 
   random = np.random.RandomState(seed)
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate_, (lb_, ub_), pval_ = twiser.ztest_stacked_train(
+    estimate_, (lb_, ub_), pval_ = twiser.ztest_cross_val_train(
       x,
       x_covariates,
       y,
@@ -571,7 +571,7 @@ def test_ztest_stacked_train_to_from_stats(data, alpha, k_fold, seed):
   folds,
   seeds,
 )
-def test_ztest_stacked_train_load_blockwise(data, alpha, k_fold, seed):
+def test_ztest_cross_val_train_load_blockwise(data, alpha, k_fold, seed):
   (x, x_covariates, y, y_covariates) = data
 
   n_x = len(x)
@@ -597,14 +597,14 @@ def test_ztest_stacked_train_load_blockwise(data, alpha, k_fold, seed):
 
   data_iter = [partial(data_gen, kk=kk) for kk in range(k_fold)]
 
-  estimate, (lb, ub), pval = twiser.ztest_stacked_train_load_blockwise(
+  estimate, (lb, ub), pval = twiser.ztest_cross_val_train_load_blockwise(
     data_iter, alpha=alpha, predictor=predictor
   )
 
   random = np.random.RandomState(seed)
   with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
-    estimate_, (lb_, ub_), pval_ = twiser.ztest_stacked_train_blockwise(
+    estimate_, (lb_, ub_), pval_ = twiser.ztest_cross_val_train_blockwise(
       x,
       x_covariates,
       y,
