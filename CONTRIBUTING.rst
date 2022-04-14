@@ -182,4 +182,4 @@ Code of Conduct
 ===============
 
 We expect all contributors to abide by our `Code of
-Conduct <https://github.com/twitter/.github/blob/master/code-of-conduct.md>`__.
+Conduct <https://github.com/twitter/.github/blob/main/code-of-conduct.md>`__.

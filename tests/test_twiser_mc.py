@@ -172,7 +172,7 @@ def test_ztest_from_stats_alt(nobs1, nobs2, std1, std2, mean1, mean2, alpha, see
   alphas,
   seeds,
 )
-def test_ztest_cv_null(
+def test_ztest_held_out_null(
   nobs1, nobs2, std1, std2, std_pred, mean_val, mean_pred, rho1, rho2, alpha, seed
 ):
   runs = RUNS
@@ -203,7 +203,7 @@ def test_ztest_cv_null(
 
     x, xp = x1[:, 0], x1[:, 1]
     y, yp = x2[:, 0], x2[:, 1]
-    R = twiser.ztest_cv(x, xp, y, yp, alpha=alpha)
+    R = twiser.ztest_held_out(x, xp, y, yp, alpha=alpha)
     results_list.append(R)
 
   pval = gen_validate(results_list, true_value=0.0, alpha=alpha)
@@ -226,7 +226,7 @@ def test_ztest_cv_null(
   alphas,
   seeds,
 )
-def test_ztest_cv_alt(
+def test_ztest_held_out_alt(
   nobs1, nobs2, std1, std2, std_pred, mean1, mean2, mean_pred, rho1, rho2, alpha, seed
 ):
   runs = RUNS
@@ -260,7 +260,7 @@ def test_ztest_cv_alt(
 
     x, xp = x1[:, 0], x1[:, 1]
     y, yp = x2[:, 0], x2[:, 1]
-    R = twiser.ztest_cv(x, xp, y, yp, alpha=alpha)
+    R = twiser.ztest_held_out(x, xp, y, yp, alpha=alpha)
     results_list.append(R)
 
   pval = gen_validate(results_list, true_value=true_value, alpha=alpha, test_null=False)
@@ -282,7 +282,7 @@ def test_ztest_cv_alt(
   alphas,
   seeds,
 )
-def test_ztest_cv_from_stats_null(
+def test_ztest_held_out_from_stats_null(
   nobs1, nobs2, std1, std2, std_pred, mean_val, mean_pred, rho1, rho2, alpha, seed
 ):
   runs = RUNS
@@ -311,7 +311,7 @@ def test_ztest_cv_from_stats_null(
     x1 = random.multivariate_normal(mean, cov1, size=nobs1)
     x2 = random.multivariate_normal(mean, cov2, size=nobs2)
 
-    R = twiser.ztest_cv_from_stats(
+    R = twiser.ztest_held_out_from_stats(
       np.mean(x1, axis=0), cov1, nobs1, np.mean(x2, axis=0), cov2, nobs2, alpha=alpha
     )
     results_list.append(R)
@@ -336,7 +336,7 @@ def test_ztest_cv_from_stats_null(
   alphas,
   seeds,
 )
-def test_ztest_cv_from_stats_alt(
+def test_ztest_held_out_from_stats_alt(
   nobs1, nobs2, std1, std2, std_pred, mean1, mean2, mean_pred, rho1, rho2, alpha, seed
 ):
   runs = RUNS
@@ -368,7 +368,7 @@ def test_ztest_cv_from_stats_alt(
     x1 = random.multivariate_normal(mean1, cov1, size=nobs1)
     x2 = random.multivariate_normal(mean2, cov2, size=nobs2)
 
-    R = twiser.ztest_cv_from_stats(
+    R = twiser.ztest_held_out_from_stats(
       np.mean(x1, axis=0), cov1, nobs1, np.mean(x2, axis=0), cov2, nobs2, alpha=alpha
     )
     results_list.append(R)
@@ -391,7 +391,7 @@ def test_ztest_cv_from_stats_alt(
   alphas,
   seeds,
 )
-def test_ztest_cv_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, alpha, seed):
+def test_ztest_held_out_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, alpha, seed):
   runs = RUNS
   random = np.random.RandomState(seed)
 
@@ -419,7 +419,7 @@ def test_ztest_cv_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, alpha,
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    R = twiser.ztest_cv_train(
+    R = twiser.ztest_held_out_train(
       x1, input1, x2, input2, alpha=alpha, predictor=predictor, random=random
     )
     results_list.append(R)
@@ -443,7 +443,7 @@ def test_ztest_cv_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, alpha,
   alphas,
   seeds,
 )
-def test_ztest_cv_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_params, alpha, seed):
+def test_ztest_held_out_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_params, alpha, seed):
   runs = RUNS
   random = np.random.RandomState(seed)
 
@@ -471,7 +471,7 @@ def test_ztest_cv_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_params,
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    R = twiser.ztest_cv_train(
+    R = twiser.ztest_held_out_train(
       x1, input1, x2, input2, alpha=alpha, predictor=predictor, random=random
     )
     results_list.append(R)
@@ -494,7 +494,7 @@ def test_ztest_cv_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_params,
   alphas,
   seeds,
 )
-def test_ztest_stacked_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, alpha, seed):
+def test_ztest_cross_val_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, alpha, seed):
   runs = RUNS
   random = np.random.RandomState(seed)
 
@@ -522,7 +522,7 @@ def test_ztest_stacked_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, a
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    R = twiser.ztest_stacked_train(
+    R = twiser.ztest_cross_val_train(
       x1, input1, x2, input2, alpha=alpha, predictor=predictor, random=random
     )
     results_list.append(R)
@@ -546,112 +546,7 @@ def test_ztest_stacked_train_null(nobs1, nobs2, std1, std2, shift1, gu_params, a
   alphas,
   seeds,
 )
-def test_ztest_stacked_train_alt(nobs1, nobs2, std1, std2, shift1, shift2, gu_params, alpha, seed):
-  runs = RUNS
-  random = np.random.RandomState(seed)
-
-  predictor = LinearRegression()
-
-  std1 = np.exp(std1)
-  std2 = np.exp(std2)
-
-  mean_input, cov_input, w1, w2 = gu_params
-  d, = mean_input.shape
-  cov_input = np.dot(cov_input, cov_input.T)
-
-  # Get actual effect size
-  true_value = (np.dot(w1, mean_input) + shift1) - (np.dot(w2, mean_input) + shift2)
-
-  results_list = []
-  for _ in range(runs):
-    input1 = random.multivariate_normal(mean_input, cov_input, size=nobs1)
-    assert np.all(np.isfinite(input1))
-    input2 = random.multivariate_normal(mean_input, cov_input, size=nobs2)
-    assert np.all(np.isfinite(input2))
-
-    x1 = np.dot(input1, w1) + shift1 + std1 * random.randn(nobs1)
-    assert x1.shape == (nobs1,)
-    x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
-    assert x2.shape == (nobs2,)
-
-    R = twiser.ztest_stacked_train(
-      x1, input1, x2, input2, alpha=alpha, predictor=predictor, random=random
-    )
-    results_list.append(R)
-
-  pval = gen_validate(results_list, true_value=true_value, alpha=alpha, test_null=False)
-  print(pval)
-  assert pval >= PVAL_CUTOFF
-
-
-@settings(deadline=None)
-@given(
-  medium_samples,
-  medium_samples,
-  easy_floats,
-  easy_floats,
-  easy_floats,
-  gufunc_args(
-    "(d),(d,d),(d),(d)->()", dtype=np.float_, elements=easy_floats, min_side=1, max_side=5
-  ),
-  alphas,
-  seeds,
-)
-def test_ztest_stacked_train_blockwise_null(
-  nobs1, nobs2, std1, std2, shift1, gu_params, alpha, seed
-):
-  runs = RUNS
-  random = np.random.RandomState(seed)
-
-  predictor = LinearRegression()
-
-  std1 = np.exp(std1)
-  std2 = np.exp(std2)
-
-  mean_input, cov_input, w1, w2 = gu_params
-  d, = mean_input.shape
-  cov_input = np.dot(cov_input, cov_input.T)
-
-  # Ensure null is true
-  shift2 = (np.dot(w1, mean_input) + shift1) - np.dot(w2, mean_input)
-
-  results_list = []
-  for _ in range(runs):
-    input1 = random.multivariate_normal(mean_input, cov_input, size=nobs1)
-    assert np.all(np.isfinite(input1))
-    input2 = random.multivariate_normal(mean_input, cov_input, size=nobs2)
-    assert np.all(np.isfinite(input2))
-
-    x1 = np.dot(input1, w1) + shift1 + std1 * random.randn(nobs1)
-    assert x1.shape == (nobs1,)
-    x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
-    assert x2.shape == (nobs2,)
-
-    R = twiser.ztest_stacked_train_blockwise(
-      x1, input1, x2, input2, alpha=alpha, predictor=predictor, random=random
-    )
-    results_list.append(R)
-
-  pval = gen_validate(results_list, true_value=0.0, alpha=alpha)
-  print(pval)
-  assert pval >= PVAL_CUTOFF
-
-
-@settings(deadline=None)
-@given(
-  big_samples,
-  big_samples,
-  easy_floats,
-  easy_floats,
-  easy_floats,
-  easy_floats,
-  gufunc_args(
-    "(d),(d,d),(d),(d)->()", dtype=np.float_, elements=easy_floats, min_side=1, max_side=5
-  ),
-  alphas,
-  seeds,
-)
-def test_ztest_stacked_train_blockwise_alt(
+def test_ztest_cross_val_train_alt(
   nobs1, nobs2, std1, std2, shift1, shift2, gu_params, alpha, seed
 ):
   runs = RUNS
@@ -681,7 +576,114 @@ def test_ztest_stacked_train_blockwise_alt(
     x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
     assert x2.shape == (nobs2,)
 
-    R = twiser.ztest_stacked_train_blockwise(
+    R = twiser.ztest_cross_val_train(
+      x1, input1, x2, input2, alpha=alpha, predictor=predictor, random=random
+    )
+    results_list.append(R)
+
+  pval = gen_validate(results_list, true_value=true_value, alpha=alpha, test_null=False)
+  print(pval)
+  assert pval >= PVAL_CUTOFF
+
+
+@settings(deadline=None)
+@given(
+  medium_samples,
+  medium_samples,
+  easy_floats,
+  easy_floats,
+  easy_floats,
+  gufunc_args(
+    "(d),(d,d),(d),(d)->()", dtype=np.float_, elements=easy_floats, min_side=1, max_side=5
+  ),
+  alphas,
+  seeds,
+)
+def test_ztest_cross_val_train_blockwise_null(
+  nobs1, nobs2, std1, std2, shift1, gu_params, alpha, seed
+):
+  runs = RUNS
+  random = np.random.RandomState(seed)
+
+  predictor = LinearRegression()
+
+  std1 = np.exp(std1)
+  std2 = np.exp(std2)
+
+  mean_input, cov_input, w1, w2 = gu_params
+  d, = mean_input.shape
+  cov_input = np.dot(cov_input, cov_input.T)
+
+  # Ensure null is true
+  shift2 = (np.dot(w1, mean_input) + shift1) - np.dot(w2, mean_input)
+
+  results_list = []
+  for _ in range(runs):
+    input1 = random.multivariate_normal(mean_input, cov_input, size=nobs1)
+    assert np.all(np.isfinite(input1))
+    input2 = random.multivariate_normal(mean_input, cov_input, size=nobs2)
+    assert np.all(np.isfinite(input2))
+
+    x1 = np.dot(input1, w1) + shift1 + std1 * random.randn(nobs1)
+    assert x1.shape == (nobs1,)
+    x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
+    assert x2.shape == (nobs2,)
+
+    R = twiser.ztest_cross_val_train_blockwise(
+      x1, input1, x2, input2, alpha=alpha, predictor=predictor, random=random
+    )
+    results_list.append(R)
+
+  pval = gen_validate(results_list, true_value=0.0, alpha=alpha)
+  print(pval)
+  assert pval >= PVAL_CUTOFF
+
+
+@settings(deadline=None)
+@given(
+  big_samples,
+  big_samples,
+  easy_floats,
+  easy_floats,
+  easy_floats,
+  easy_floats,
+  gufunc_args(
+    "(d),(d,d),(d),(d)->()", dtype=np.float_, elements=easy_floats, min_side=1, max_side=5
+  ),
+  alphas,
+  seeds,
+)
+def test_ztest_cross_val_train_blockwise_alt(
+  nobs1, nobs2, std1, std2, shift1, shift2, gu_params, alpha, seed
+):
+  runs = RUNS
+  random = np.random.RandomState(seed)
+
+  predictor = LinearRegression()
+
+  std1 = np.exp(std1)
+  std2 = np.exp(std2)
+
+  mean_input, cov_input, w1, w2 = gu_params
+  d, = mean_input.shape
+  cov_input = np.dot(cov_input, cov_input.T)
+
+  # Get actual effect size
+  true_value = (np.dot(w1, mean_input) + shift1) - (np.dot(w2, mean_input) + shift2)
+
+  results_list = []
+  for _ in range(runs):
+    input1 = random.multivariate_normal(mean_input, cov_input, size=nobs1)
+    assert np.all(np.isfinite(input1))
+    input2 = random.multivariate_normal(mean_input, cov_input, size=nobs2)
+    assert np.all(np.isfinite(input2))
+
+    x1 = np.dot(input1, w1) + shift1 + std1 * random.randn(nobs1)
+    assert x1.shape == (nobs1,)
+    x2 = np.dot(input2, w2) + shift2 + std2 * random.randn(nobs2)
+    assert x2.shape == (nobs2,)
+
+    R = twiser.ztest_cross_val_train_blockwise(
       x1, input1, x2, input2, alpha=alpha, predictor=predictor, random=random
     )
     results_list.append(R)

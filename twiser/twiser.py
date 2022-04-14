@@ -1,21 +1,20 @@
 # Copyright 2021 Twitter, Inc.
 # SPDX-License-Identifier: Apache-2.0
 
-# TODO
-# review func names
-# order the funcs for what we want to see in docs
-
 """The goal of this package is to make hypothesis testing using variance reduction methods as easy
 as using :func:`scipy.stats.ttest_ind` and :func:`scipy.stats.ttest_ind_from_stats`. A lot of the
 API is designed to match that simplicity as much as possible.
 
+The publication in [1]_ was implented using this package. The variance reduction ideas here are
+built on top of the CUPED method ideas in [2]_ and [3]_.
+
 The package currently supports three kinds of tests:
 
 * basic :math:`z`-test: This is the one from the intro stats textbooks.
-* cv: This is a held out control variate method (train the predictor on a held out set).
-* stacked: This is a :math:`k`-fold cross validation type setup when training the predictor.
+* held out: This is a held out control variate method (train the predictor on a held out set).
+* cross val: This is a :math:`k`-fold cross validation type setup when training the predictor.
 
-The distinction between basic, cv, and stacked is discussed in [1]_.
+The distinction between basic, held out (aka cv), and cross val (aka stacked) is discussed in [4]_.
 
 Each method has a few different ways to call it:
 
@@ -35,7 +34,18 @@ Every statistical test in this package returns the same set of variables:
 
 References
 ----------
-.. [1] `I. Barr. Reducing the variance of A/B tests using prior information. Degenerate State, Jun
+.. [1] `R. Turner, U. Pavalanathan, S. Webb, N. Hammerla, B. Cohn, and A. Fu. Isotonic regression
+   adjustment for variance reduction. In CODE@MIT, 2021
+   <https://ide.mit.edu/events/2021-conference-on-digital-experimentation-mit-codemit/>`_.
+.. [2] `A. Deng, Y. Xu, R. Kohavi, and T. Walker. Improving the sensitivity of online controlled
+   experiments by utilizing pre-experiment data. In Proceedings of the Sixth ACM International
+   Conference on Web Search and Data Mining, pages 123--132, 2013
+   <https://www.exp-platform.com/Documents/2013-02-CUPED-ImprovingSensitivityOfControlledExperiments.pdf>`_.
+.. [3] `A. Poyarkov, A. Drutsa, A. Khalyavin, G. Gusev, and P. Serdyukov. Boosted decision tree
+   regression adjustment for variance reduction in online controlled experiments. In Proceedings of
+   the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, pages
+   235--244, 2016 <https://www.kdd.org/kdd2016/papers/files/adf0653-poyarkovA.pdf>`_.
+.. [4] `I. Barr. Reducing the variance of A/B tests using prior information. Degenerate State, Jun
    2018
    <https://www.degeneratestate.org/posts/2018/Jan/04/reducing-the-variance-of-ab-test-using-prior-information/>`_.
 """
@@ -398,7 +408,7 @@ def _make_train_idx(frac: float, n: int, random: Rng = np_random) -> np.ndarray:
   return train_idx
 
 
-def ztest_cv_from_stats(
+def ztest_held_out_from_stats(
   mean1: npt.ArrayLike,
   cov1: npt.ArrayLike,
   nobs1: int,
@@ -408,7 +418,7 @@ def ztest_cv_from_stats(
   *,
   alpha: float = ALPHA,
 ) -> TestResult:
-  r"""Version of :func:`ztest_cv` that works off the sufficient statistics of the data.
+  r"""Version of :func:`ztest_held_out` that works off the sufficient statistics of the data.
 
   Parameters
   ----------
@@ -448,7 +458,7 @@ def ztest_cv_from_stats(
   return R
 
 
-def ztest_cv(
+def ztest_held_out(
   x: npt.ArrayLike,
   xp: npt.ArrayLike,
   y: npt.ArrayLike,
@@ -458,7 +468,7 @@ def ztest_cv(
   health_check_output: bool = True,
   ddof: int = 1,
 ) -> TestResult:
-  r"""Two-sample unpaired :math:`z`-test with variance reduction using control variarates (CV). It
+  r"""Two-sample unpaired :math:`z`-test with variance reduction using control variarates. It
   does not assume equal sample sizes or variances.
 
   The predictions (control variates) must be derived from features that are independent of
@@ -505,7 +515,7 @@ def ztest_cv(
   return R
 
 
-def ztest_cv_train(
+def ztest_held_out_train(
   x: npt.ArrayLike,
   x_covariates: npt.ArrayLike,
   y: npt.ArrayLike,
@@ -519,7 +529,7 @@ def ztest_cv_train(
   random: Rng = None,
   ddof: int = 1,
 ) -> TestResult:
-  r"""Version of :func:`ztest_cv` that also trains the control variate predictor.
+  r"""Version of :func:`ztest_held_out` that also trains the control variate predictor.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
   in treatment and control have a different distribution then the test may be invalid.
@@ -550,7 +560,8 @@ def ztest_cv_train(
     If ``True`` perform a health check that ensures the predictions have the same distribution in
     treatment and control. If not, issue a warning.
   predictor : sklearn-like regression object
-    An object that has a `fit` and `predict` routine to make predictions.
+    An object that has a `fit` and `predict` routine to make predictions. The object does not need
+    to be fit yet. It will be fit in this method.
   random : :class:`numpy:numpy.random.RandomState`
     An optional numpy random stream can be passed in for reproducibility.
   ddof : int
@@ -597,7 +608,7 @@ def ztest_cv_train(
   yp = predictor.predict(y_covariates[~train_idx_y, :])
   assert np.all(np.isfinite(yp))
 
-  R = ztest_cv(
+  R = ztest_held_out(
     x[~train_idx_x],
     xp,
     y[~train_idx_y],
@@ -622,7 +633,7 @@ def ztest_in_sample_train(
   random: Rng = None,
   ddof: int = 1,
 ) -> TestResult:
-  r"""Version of :func:`ztest_cv` that also trains the control variate predictor.
+  r"""Version of :func:`ztest_held_out` that also trains the control variate predictor.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
   in treatment and control have a different distribution then the test may be invalid.
@@ -649,7 +660,8 @@ def ztest_in_sample_train(
     If ``True`` perform a health check that ensures the predictions have the same distribution in
     treatment and control. If not, issue a warning.
   predictor : sklearn-like regression object
-    An object that has a `fit` and `predict` routine to make predictions.
+    An object that has a `fit` and `predict` routine to make predictions. The object does not need
+    to be fit yet. It will be fit in this method.
   random : :class:`numpy:numpy.random.RandomState`
     An optional numpy random stream can be passed in for reproducibility.
   ddof : int
@@ -688,11 +700,11 @@ def ztest_in_sample_train(
   yp = predictor.predict(y_covariates)
   assert np.all(np.isfinite(yp))
 
-  R = ztest_cv(x, xp, y, yp, alpha=alpha, ddof=ddof, health_check_output=health_check_output)
+  R = ztest_held_out(x, xp, y, yp, alpha=alpha, ddof=ddof, health_check_output=health_check_output)
   return R
 
 
-# ==== Implement Stacked version ====
+# ==== Implement cross val version ====
 
 
 def _pool_moments(
@@ -726,7 +738,7 @@ def _fold_idx(n: int, k: int, random: Rng = np_random) -> np.ndarray:
   return idx
 
 
-def ztest_stacked_from_stats(
+def ztest_cross_val_from_stats(
   mean1: npt.ArrayLike,
   cov1: npt.ArrayLike,
   nobs1: npt.ArrayLike,
@@ -736,7 +748,7 @@ def ztest_stacked_from_stats(
   *,
   alpha: float = ALPHA,
 ) -> TestResult:
-  r"""Version of :func:`ztest_stacked` that works off the sufficient statistics of the data.
+  r"""Version of :func:`ztest_cross_val` that works off the sufficient statistics of the data.
 
   Parameters
   ----------
@@ -776,11 +788,11 @@ def ztest_stacked_from_stats(
 
   mean1, cov1, nobs1 = _pool_moments(mean1, cov1, nobs1)
   mean2, cov2, nobs2 = _pool_moments(mean2, cov2, nobs2)
-  R = ztest_cv_from_stats(mean1, cov1, nobs1, mean2, cov2, nobs2, alpha=alpha)
+  R = ztest_held_out_from_stats(mean1, cov1, nobs1, mean2, cov2, nobs2, alpha=alpha)
   return R
 
 
-def ztest_stacked(
+def ztest_cross_val(
   x: npt.ArrayLike,
   xp: npt.ArrayLike,
   x_fold: npt.ArrayLike,
@@ -791,8 +803,8 @@ def ztest_stacked(
   alpha: float = ALPHA,
   health_check_output: bool = True,
 ) -> TestResult:
-  r"""Two-sample unpaired :math:`z`-test with variance reduction using the *stacked* control
-  variarates (CV) method. It does not assume equal sample sizes or variances.
+  r"""Two-sample unpaired :math:`z`-test with variance reduction using the cross validated control
+  variarates method. It does not assume equal sample sizes or variances.
 
   The predictions (control variates) must be derived from features that are independent of
   assignment to treatment or control. If the predictions in treatment and control have a different
@@ -833,11 +845,11 @@ def ztest_stacked(
   _validate_alpha(alpha)
 
   # Current method ignores fold index => we won't validate for now
-  R = ztest_cv(x, xp, y, yp, alpha=alpha, ddof=0, health_check_output=health_check_output)
+  R = ztest_held_out(x, xp, y, yp, alpha=alpha, ddof=0, health_check_output=health_check_output)
   return R
 
 
-def ztest_stacked_train(
+def ztest_cross_val_train(
   x: npt.ArrayLike,
   x_covariates: npt.ArrayLike,
   y: npt.ArrayLike,
@@ -850,7 +862,7 @@ def ztest_stacked_train(
   predictor: Model = None,
   random: Rng = None,
 ) -> TestResult:
-  r"""Version of :func:`ztest_stacked` that also trains the control variate predictor.
+  r"""Version of :func:`ztest_cross_val` that also trains the control variate predictor.
 
   The covariates/features must be independent of assignment to treatment or control. If the features
   in treatment and control have a different distribution then the test may be invalid.
@@ -879,7 +891,8 @@ def ztest_stacked_train(
     If ``True`` perform a health check that ensures the predictions have the same distribution in
     treatment and control. If not, issue a warning.
   predictor : sklearn-like regression object
-    An object that has a `fit` and `predict` routine to make predictions.
+    An object that has a `fit` and `predict` routine to make predictions. The object does not need
+    to be fit yet. It will be fit in this method.
   random : :class:`numpy:numpy.random.RandomState`
     An optional numpy random stream can be passed in for reproducibility.
 
@@ -921,13 +934,13 @@ def ztest_stacked_train(
     xp[fold_idx_x == kk] = predictor.predict(x_covariates[fold_idx_x == kk])
     yp[fold_idx_y == kk] = predictor.predict(y_covariates[fold_idx_y == kk])
 
-  R = ztest_stacked(
+  R = ztest_cross_val(
     x, xp, fold_idx_x, y, yp, fold_idx_y, alpha=alpha, health_check_output=health_check_output
   )
   return R
 
 
-def ztest_stacked_train_blockwise(
+def ztest_cross_val_train_blockwise(
   x: npt.ArrayLike,
   x_covariates: npt.ArrayLike,
   y: npt.ArrayLike,
@@ -940,7 +953,7 @@ def ztest_stacked_train_blockwise(
   predictor: Model = None,
   random: Rng = None,
 ) -> TestResult:
-  r"""Version of :func:`ztest_stacked_train` that is more efficient if the fit routine scales worse
+  r"""Version of :func:`ztest_cross_val_train` that is more efficient if the fit routine scales worse
   than O(N), otherwise this will not be more efficient.
 
   Parameters
@@ -967,7 +980,8 @@ def ztest_stacked_train_blockwise(
     If ``True`` perform a health check that ensures the predictions have the same distribution in
     treatment and control. If not, issue a warning.
   predictor : sklearn-like regression object
-    An object that has a `fit` and `predict` routine to make predictions.
+    An object that has a `fit` and `predict` routine to make predictions. The object does not need
+    to be fit yet. It will be fit in this method.
   random : :class:`numpy:numpy.random.RandomState`
     An optional numpy random stream can be passed in for reproducibility.
 
@@ -1015,35 +1029,36 @@ def ztest_stacked_train_blockwise(
   xp = np.nanmean(xp, axis=1)
   yp = np.nanmean(yp, axis=1)
 
-  R = ztest_stacked(
+  R = ztest_cross_val(
     x, xp, fold_idx_x, y, yp, fold_idx_y, alpha=alpha, health_check_output=health_check_output
   )
   return R
 
 
-def ztest_stacked_train_load_blockwise(
+def ztest_cross_val_train_load_blockwise(
   data_iter: Sequence[DataGen],
   *,
   alpha: float = ALPHA,
   predictor: Model = None,
   callback: Optional[Callable[[Model], None]] = None,
 ) -> TestResult:
-  r"""Version of :func:`ztest_stacked_train_blockwise` that loads the data in blocks to avoid
-  overflowing memory. Using :func:`ztest_stacked_train_blockwise` is faster if all the data fits in
-  memory.
+  r"""Version of :func:`ztest_cross_val_train_blockwise` that loads the data in blocks to avoid
+  overflowing memory. Using :func:`ztest_cross_val_train_blockwise` is faster if all the data fits
+  in memory.
 
   Parameters
   ----------
   data_iter : Sequence[Callable[[], Tuple[ndarray, ndarray, ndarray, ndarray]]]
     An iterable of functions, where each function returns a different cross validation fold. The
     functions should return data in the format of a tuple: ``(x, x_covariates, y, y_covariates)``.
-    See the parameters of :func:`ztest_stacked_train_blockwise` for details on the shapes of these
+    See the parameters of :func:`ztest_cross_val_train_blockwise` for details on the shapes of these
     variables.
   alpha : float
     Required confidence level, typically this should be 0.05, and must be inside the interval range
     :math:`[0, 1)`.
   predictor : sklearn-like regression object
-    An object that has a `fit` and `predict` routine to make predictions.
+    An object that has a `fit` and `predict` routine to make predictions. The object does not need
+    to be fit yet. It will be fit in this method.
   callback :
     An optional callback that gets called for each cross validation fold in the format
     ``callback(predictor)``. This is sometimes useful for logging.
@@ -1122,5 +1137,5 @@ def ztest_stacked_train_load_blockwise(
     mean2[kk, 1] = np.mean(yp)
     cov2[kk, :, :] = np.cov((y, yp), ddof=0)
     nobs2[kk] = n_y
-  R = ztest_stacked_from_stats(mean1, cov1, nobs1, mean2, cov2, nobs2, alpha=alpha)
+  R = ztest_cross_val_from_stats(mean1, cov1, nobs1, mean2, cov2, nobs2, alpha=alpha)
   return R
