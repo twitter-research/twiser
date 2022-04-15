@@ -2,7 +2,7 @@
 Getting Started
 ***************
 
-The twiser python package implements a suite of functions for variance reduction in A/B tests using pre-experiment covariates supporting publication [1]_. These functions extend the idea of using pre-experiment data for variance reduction previously proposed in publication [2]_. 
+The twiser python package implements a suite of functions for variance reduction in A/B tests using pre-experiment covariates supporting publication [1]_. These functions extend the idea of using pre-experiment data for variance reduction previously proposed in publication [2]_.
 
 Installation
 ============
