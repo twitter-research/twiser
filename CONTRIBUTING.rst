@@ -146,7 +146,7 @@ Workflow
 --------
 
 We follow the `GitHub Flow
-Workflow <https://guides.github.com/introduction/flow/>`__, which
+Workflow <https://docs.github.com/en/get-started/quickstart/github-flow/>`__, which
 typically involves forking the project into your GitHub account, adding
 your changes to a feature branch, and opening a Pull Request to
 contribute those changes back to the project.
