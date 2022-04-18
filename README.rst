@@ -16,7 +16,7 @@ The package is installed with:
 
    pip install twiser
 
-See `GitHub <https://github.com/twitter/twiser>`_, `PyPI <https://pypi.org/project/twiser/>`_, and `Read the Docs <https://twiser.readthedocs.io/en/latest/>`_.
+See `GitHub <https://github.com/twitter-research/twiser>`_, `PyPI <https://pypi.org/project/twiser/>`_, and `Read the Docs <https://twiser.readthedocs.io/en/latest/>`_.
 
 Example Usage
 =============
@@ -142,12 +142,12 @@ See the `documentation <https://twiser.readthedocs.io/en/latest/>`_ for details.
 Support
 =======
 
-Create a `new issue <https://github.com/twitter-research/twiser/issues/new/choose>`_ or `join a discussion <https://github.com/twitter-research/twiser/discussions>`_.
+Create a `new issue <https://github.com/twitter-research/twiser/issues/new/choose>`_.
 
 Links
 =====
 
-The `source <https://github.com/twitter/twiser>`_ is hosted on GitHub.
+The `source <https://github.com/twitter-research/twiser>`_ is hosted on GitHub.
 
 The `documentation <https://twiser.readthedocs.io/en/latest/>`_ is hosted at Read the Docs.
 
