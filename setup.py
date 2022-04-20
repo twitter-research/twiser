@@ -23,7 +23,7 @@ setup(
   name="twiser",
   version=__version__,
   packages=find_packages(),
-  url="https://github.com/twitter/twiser/",
+  url="https://github.com/twitter-research/twiser/",
   author="Ryan Turner",
   author_email=("rdturnermtl@github.com"),
   license="Apache v2",
